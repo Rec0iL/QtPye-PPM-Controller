@@ -93,7 +93,3 @@ This repository includes a `layout_presets` folder with pre-configured setups fo
 3.  Restart the application. The preset layout will be loaded automatically.
 
 ---
-
-## License
-
-This project is licensed under the MIT License.
