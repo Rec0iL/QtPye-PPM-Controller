@@ -11,7 +11,7 @@ from PyQt5.QtGui import (QBrush, QColor, QPainterPath, QPainter,
                          QPen, QIcon)
 from serial_manager import SerialManager
 from nodes import (BaseNode, PPMChannelNode, JoystickNode, CustomLogicNode,
-                   BoostControlNode, ToggleNode)
+                   BoostControlNode, ToggleNode, ThreePositionSwitchNode)
 from connections import Connection
 
 class PortSelectionDialog(QDialog):
@@ -114,7 +114,6 @@ class PPMScene(QGraphicsScene):
         if conn in self.connections:
             self.connections.remove(conn)
 
-
     def start_connection_drag(self, start_pos, start_node, start_index):
         self.connection_start_node = start_node
         self.connection_start_index = start_index
@@ -177,7 +176,7 @@ class PPMScene(QGraphicsScene):
 class PPMApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("PPM Control Interface")
+        self.setWindowTitle("QtPye-PPM-Controller")
         self.setGeometry(100, 100, 1200, 800)
 
         pygame.init()
@@ -247,6 +246,10 @@ class PPMApp(QMainWindow):
         add_toggle_node_action.triggered.connect(self.add_toggle_node)
         add_node_menu.addAction(add_toggle_node_action)
 
+        add_3pos_switch_action = QAction("3-Position Switch", self)
+        add_3pos_switch_action.triggered.connect(self.add_three_position_switch_node)
+        add_node_menu.addAction(add_3pos_switch_action)
+
         add_node_button = QToolButton(self)
         add_node_button.setText("Add Node")
         add_node_button.setIcon(QIcon.fromTheme("list-add"))
@@ -285,7 +288,6 @@ class PPMApp(QMainWindow):
         self.remove_all_action.triggered.connect(self.scene.remove_all_connections)
         toolbar.addAction(self.remove_all_action)
 
-        # Action to toggle the serial console's visibility
         toggle_console_action = self.serial_console.toggleViewAction()
         toggle_console_action.setText("Toggle Console")
         toggle_console_action.setIcon(QIcon.fromTheme("utilities-terminal"))
@@ -295,6 +297,8 @@ class PPMApp(QMainWindow):
         self.statusBar()
         self.status_label = QLabel("Disconnected")
         self.statusBar().addWidget(self.status_label)
+
+        self.load_layout()
 
     def add_custom_node(self, inputs):
         node = CustomLogicNode(x=400, y=100, inputs=inputs)
@@ -306,6 +310,10 @@ class PPMApp(QMainWindow):
 
     def add_toggle_node(self):
         node = ToggleNode(x=400, y=100)
+        self.scene.addItem(node)
+
+    def add_three_position_switch_node(self):
+        node = ThreePositionSwitchNode(x=400, y=100)
         self.scene.addItem(node)
 
     def show_port_selection(self):
@@ -380,14 +388,12 @@ class PPMApp(QMainWindow):
                 data = json.load(f)
 
             # Clear existing scene but keep default nodes if needed
-            for item in self.scene.items():
-                if isinstance(item, (Connection, CustomLogicNode, BoostControlNode, ToggleNode)):
-                    self.scene.removeItem(item)
-                elif isinstance(item, JoystickNode) or isinstance(item, PPMChannelNode):
-                    # Reposition default nodes instead of recreating
-                    pass
-
-            self.scene.connections = []
+            for item in list(self.scene.items()):
+                if isinstance(item, (Connection, CustomLogicNode, BoostControlNode, ToggleNode, ThreePositionSwitchNode)):
+                    if isinstance(item, Connection):
+                        self.remove_connection(item)
+                    else:
+                        self.scene.removeItem(item)
 
             node_map = {item.title: item for item in self.scene.items() if isinstance(item, BaseNode)}
 
@@ -397,7 +403,6 @@ class PPMApp(QMainWindow):
                 y = node_data["y"]
                 title = node_data["title"]
 
-                # If a default node with this title already exists, move it. Otherwise, create it.
                 if title in node_map:
                     node = node_map[title]
                     node.setPos(x, y)
@@ -411,27 +416,27 @@ class PPMApp(QMainWindow):
                         channel = int(title.split(' ')[2])
                         node = PPMChannelNode(channel, x, y, serial_manager=self.serial_manager)
                     except (IndexError, ValueError):
-                        print(f"Could not parse channel number from title: {title}")
                         return None
                 elif node_type == "CustomLogicNode":
-                    node = CustomLogicNode(x=x, y=y, inputs=2) # Note: Does not save/load number of inputs yet
+                    # Note: Does not save/load number of inputs yet. Assuming 2 for now.
+                    node = CustomLogicNode(x=x, y=y, inputs=2)
                 elif node_type == "BoostControlNode":
                     node = BoostControlNode(x=x, y=y)
                 elif node_type == "ToggleNode":
                     node = ToggleNode(x=x, y=y)
+                elif node_type == "ThreePositionSwitchNode":
+                    node = ThreePositionSwitchNode(x=x, y=y)
 
                 if node:
                     self.scene.addItem(node)
                     node.title = title
                     return node
 
-            # First pass: create/move all nodes
             for node_data in data["nodes"]:
                 node = create_node(node_data)
                 if node:
                     node_map[node.title] = node
 
-            # Second pass: create all connections
             for conn_data in data["connections"]:
                 start_node_title = conn_data["start_node_title"]
                 end_node_title = conn_data["end_node_title"]
