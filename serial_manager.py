@@ -1,4 +1,3 @@
-# serial_manager.py
 import serial
 import serial.tools.list_ports
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer
@@ -16,14 +15,22 @@ class SerialManager(QObject):
         self.is_raw_mode = False
 
         self.channel_values = {i: 1500 for i in range(1, 9)}
+        self.raw_log_batch = []
 
+        # Timer for sending PPM data (50 Hz)
         self.transmit_timer = QTimer(self)
-        self.transmit_timer.setInterval(20) # 20 ms = 50 Hz update rate
+        self.transmit_timer.setInterval(20)
         self.transmit_timer.timeout.connect(self._transmit_channel_data)
 
+        # Timer for reading incoming data
         self.read_timer = QTimer(self)
         self.read_timer.setInterval(50)
         self.read_timer.timeout.connect(self._read_serial_data)
+
+        # New timer to batch log updates (5 Hz)
+        self.log_update_timer = QTimer(self)
+        self.log_update_timer.setInterval(200) # 200 ms = 5 Hz
+        self.log_update_timer.timeout.connect(self._emit_batched_logs)
 
     def list_ports(self):
         ports = serial.tools.list_ports.comports()
@@ -39,6 +46,7 @@ class SerialManager(QObject):
             self.log_message.emit(f"Connected to {port_name} at {self.baud_rate} baud.", False)
             self.read_timer.start()
             self.transmit_timer.start()
+            self.log_update_timer.start() # Start the log batching timer
             return True
         except serial.SerialException as e:
             self.log_message.emit(f"Error connecting: {e}", False)
@@ -48,6 +56,8 @@ class SerialManager(QObject):
     def disconnect(self):
         self.transmit_timer.stop()
         self.read_timer.stop()
+        self.log_update_timer.stop() # Stop the log batching timer
+        self.raw_log_batch.clear()
         if self.ser and self.ser.is_open:
             self.ser.close()
             self.log_message.emit("Disconnected.", False)
@@ -55,10 +65,6 @@ class SerialManager(QObject):
         self.ser = None
 
     def send_command(self, command):
-        """
-        This method updates the local state for a channel.
-        The transmit timer will send the actual command later.
-        """
         try:
             channel_str, value_str = command.split('=')
             channel = int(channel_str)
@@ -69,22 +75,15 @@ class SerialManager(QObject):
             self.log_message.emit(f"Invalid command format: {command}", False)
 
     def _transmit_channel_data(self):
-        """
-        Called by the timer to send the current state of all 8 channels
-        using the correct ASCII Command Interface (ACI) format.
-        """
         if self.ser and self.ser.is_open:
             try:
-                # Loop through each channel and send its respective command
                 for channel, value in self.channel_values.items():
-                    # Format the command as "i=xxxx" e.g., "1=1500"
                     command_str = f"{channel}={value}"
-
-                    # Send the command. Manual says no CR/LF is needed.
                     self.ser.write(command_str.encode())
 
                     if self.is_raw_mode:
-                        self.log_message.emit(f"Sent: {command_str}", True)
+                        # Add to batch instead of emitting a signal immediately
+                        self.raw_log_batch.append(f"Sent: {command_str}")
 
             except serial.SerialException as e:
                 self.log_message.emit(f"Error sending data: {e}", False)
@@ -94,7 +93,8 @@ class SerialManager(QObject):
         if self.ser and self.ser.is_open and self.ser.in_waiting > 0:
             data = self.ser.read_all()
             if self.is_raw_mode:
-                self.log_message.emit(f"Received (raw): {data}", True)
+                 # Add to batch instead of emitting a signal immediately
+                self.raw_log_batch.append(f"Received (raw): {data}")
             else:
                 try:
                     decoded_data = data.decode('utf-8', errors='ignore').strip()
@@ -102,3 +102,10 @@ class SerialManager(QObject):
                         self.log_message.emit(f"Received: {decoded_data}", False)
                 except UnicodeDecodeError:
                     self.log_message.emit(f"Received (raw): {data}", True)
+
+    def _emit_batched_logs(self):
+        """Called by a timer to send all collected raw logs in a single update."""
+        if self.raw_log_batch:
+            full_log_message = "\n".join(self.raw_log_batch)
+            self.log_message.emit(full_log_message, True)
+            self.raw_log_batch.clear()

@@ -11,7 +11,8 @@ from PyQt5.QtGui import (QBrush, QColor, QPainterPath, QPainter,
                          QPen, QIcon)
 from serial_manager import SerialManager
 from nodes import (BaseNode, PPMChannelNode, JoystickNode, CustomLogicNode,
-                   BoostControlNode, ToggleNode, ThreePositionSwitchNode)
+                   BoostControlNode, ToggleNode, ThreePositionSwitchNode,
+                   ExpoCurveNode, MixerNode)
 from connections import Connection
 
 class PortSelectionDialog(QDialog):
@@ -250,6 +251,14 @@ class PPMApp(QMainWindow):
         add_3pos_switch_action.triggered.connect(self.add_three_position_switch_node)
         add_node_menu.addAction(add_3pos_switch_action)
 
+        add_expo_node_action = QAction("Expo Curve", self)
+        add_expo_node_action.triggered.connect(self.add_expo_node)
+        add_node_menu.addAction(add_expo_node_action)
+
+        add_mixer_node_action = QAction("Mixer", self)
+        add_mixer_node_action.triggered.connect(self.add_mixer_node)
+        add_node_menu.addAction(add_mixer_node_action)
+
         add_node_button = QToolButton(self)
         add_node_button.setText("Add Node")
         add_node_button.setIcon(QIcon.fromTheme("list-add"))
@@ -298,6 +307,8 @@ class PPMApp(QMainWindow):
         self.status_label = QLabel("Disconnected")
         self.statusBar().addWidget(self.status_label)
 
+        self.max_log_blocks = 500
+
         self.load_layout()
 
     def add_custom_node(self, inputs):
@@ -314,6 +325,14 @@ class PPMApp(QMainWindow):
 
     def add_three_position_switch_node(self):
         node = ThreePositionSwitchNode(x=400, y=100)
+        self.scene.addItem(node)
+
+    def add_expo_node(self):
+        node = ExpoCurveNode(x=400, y=100)
+        self.scene.addItem(node)
+
+    def add_mixer_node(self):
+        node = MixerNode(x=400, y=100)
         self.scene.addItem(node)
 
     def show_port_selection(self):
@@ -344,13 +363,30 @@ class PPMApp(QMainWindow):
             self.disconnect_action.setEnabled(False)
 
     def append_log(self, message, is_raw):
+        # Limit the number of lines in the console to prevent slowdowns
+        document = self.console_text.document()
+        if document.blockCount() > self.max_log_blocks:
+            cursor = self.console_text.textCursor()
+            cursor.movePosition(cursor.Start)
+            # Select the excess blocks from the beginning
+            cursor.movePosition(cursor.NextBlock, cursor.KeepAnchor,
+                                document.blockCount() - self.max_log_blocks)
+            cursor.removeSelectedText()
+            cursor.movePosition(cursor.End) # Ensure cursor is at the end
+
+        # Move cursor to the end before inserting text
         cursor = self.console_text.textCursor()
         cursor.movePosition(cursor.End)
         self.console_text.setTextCursor(cursor)
+
+        # Insert the new message
         if is_raw:
             self.console_text.insertHtml(f"<span style='color: #FFC107;'>[RAW] {message}</span><br>")
         else:
             self.console_text.insertPlainText(message + '\n')
+
+        # Ensure the view is scrolled to the bottom
+        self.console_text.verticalScrollBar().setValue(self.console_text.verticalScrollBar().maximum())
 
     def toggle_raw_mode(self, state):
         self.serial_manager.is_raw_mode = (state == Qt.Checked)
@@ -381,15 +417,15 @@ class PPMApp(QMainWindow):
         print("Layout saved.")
         self.append_log("Layout saved to layout.json", False)
 
-
     def load_layout(self):
         try:
             with open("layout.json", "r") as f:
                 data = json.load(f)
 
-            # Clear existing scene but keep default nodes if needed
             for item in list(self.scene.items()):
-                if isinstance(item, (Connection, CustomLogicNode, BoostControlNode, ToggleNode, ThreePositionSwitchNode)):
+                if isinstance(item, (Connection, CustomLogicNode, BoostControlNode,
+                                     ToggleNode, ThreePositionSwitchNode,
+                                     ExpoCurveNode, MixerNode)):
                     if isinstance(item, Connection):
                         self.remove_connection(item)
                     else:
@@ -418,7 +454,6 @@ class PPMApp(QMainWindow):
                     except (IndexError, ValueError):
                         return None
                 elif node_type == "CustomLogicNode":
-                    # Note: Does not save/load number of inputs yet. Assuming 2 for now.
                     node = CustomLogicNode(x=x, y=y, inputs=2)
                 elif node_type == "BoostControlNode":
                     node = BoostControlNode(x=x, y=y)
@@ -426,6 +461,10 @@ class PPMApp(QMainWindow):
                     node = ToggleNode(x=x, y=y)
                 elif node_type == "ThreePositionSwitchNode":
                     node = ThreePositionSwitchNode(x=x, y=y)
+                elif node_type == "ExpoCurveNode":
+                    node = ExpoCurveNode(x=x, y=y)
+                elif node_type == "MixerNode":
+                    node = MixerNode(x=x, y=y)
 
                 if node:
                     self.scene.addItem(node)
