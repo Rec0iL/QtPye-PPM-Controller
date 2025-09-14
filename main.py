@@ -109,7 +109,13 @@ class PPMScene(QGraphicsScene):
         start_node.remove_connection(conn)
         end_node.set_input_occupied(conn.end_index, False)
 
-        start_node.output_signals[conn.start_index].output_signal.disconnect()
+        # Disconnect the specific slot associated with this connection
+        if hasattr(conn, 'slot') and conn.slot is not None:
+            try:
+                start_node.output_signals[conn.start_index].output_signal.disconnect(conn.slot)
+            except TypeError:
+                # This can happen if the signal is already gone, which is fine.
+                pass
 
         self.removeItem(conn)
         if conn in self.connections:
@@ -171,8 +177,29 @@ class PPMScene(QGraphicsScene):
         end_node.set_input_occupied(end_index, True)
 
         if start_index < len(start_node.output_signals):
-            start_node.output_signals[start_index].output_signal.connect(lambda value: end_node.set_value(value, end_index))
+            # Create a lambda, store a reference to it, and then connect it
+            slot = lambda value: end_node.set_value(value, end_index)
+            new_connection.slot = slot
+            start_node.output_signals[start_index].output_signal.connect(slot)
+
             print(f"Connected {start_node.title} output {start_index} to {end_node.title} input {end_index}")
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Delete:
+            selected_items = self.selectedItems()
+            for item in selected_items:
+                # Ensure we are only deleting deletable custom nodes
+                if isinstance(item, (CustomLogicNode, BoostControlNode, ToggleNode,
+                                     ThreePositionSwitchNode, ExpoCurveNode, MixerNode)):
+
+                    # First, remove all connections attached to this node
+                    for conn in list(item.connections): # Use list() to create a copy
+                        self.remove_connection(conn)
+
+                    # Now, remove the node itself
+                    self.removeItem(item)
+        else:
+            super().keyPressEvent(event)
 
 class PPMApp(QMainWindow):
     def __init__(self):

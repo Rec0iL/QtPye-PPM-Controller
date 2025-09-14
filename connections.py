@@ -11,6 +11,7 @@ class Connection(QGraphicsItem):
         self.start_index = start_index
         self.end_node = end_node
         self.end_index = end_index
+        self.slot = None
 
         self.setZValue(1)
         self.connection_color = self._generate_random_color()
