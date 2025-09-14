@@ -1,0 +1,102 @@
+{
+    "nodes": [
+        {
+            "type": "BoostControlNode",
+            "x": 838.0,
+            "y": 335.0,
+            "title": "Boost Control"
+        },
+        {
+            "type": "PPMChannelNode",
+            "x": 1050.0,
+            "y": 1330.0,
+            "title": "PPM Channel 8"
+        },
+        {
+            "type": "PPMChannelNode",
+            "x": 1050.0,
+            "y": 1220.0,
+            "title": "PPM Channel 7"
+        },
+        {
+            "type": "PPMChannelNode",
+            "x": 1050.0,
+            "y": 1110.0,
+            "title": "PPM Channel 6"
+        },
+        {
+            "type": "PPMChannelNode",
+            "x": 1050.0,
+            "y": 1000.0,
+            "title": "PPM Channel 5"
+        },
+        {
+            "type": "PPMChannelNode",
+            "x": 1050.0,
+            "y": 890.0,
+            "title": "PPM Channel 4"
+        },
+        {
+            "type": "PPMChannelNode",
+            "x": 1050.0,
+            "y": 780.0,
+            "title": "PPM Channel 3"
+        },
+        {
+            "type": "PPMChannelNode",
+            "x": 1050.0,
+            "y": 670.0,
+            "title": "PPM Channel 2"
+        },
+        {
+            "type": "PPMChannelNode",
+            "x": 1207.0,
+            "y": 536.0,
+            "title": "PPM Channel 1"
+        },
+        {
+            "type": "JoystickNode",
+            "x": 447.0,
+            "y": 540.0,
+            "title": "Logitech Extreme 3D"
+        }
+    ],
+    "connections": [
+        {
+            "start_node_title": "Logitech Extreme 3D",
+            "start_node_output_index": 3,
+            "end_node_title": "Boost Control",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_title": "Logitech Extreme 3D",
+            "start_node_output_index": 4,
+            "end_node_title": "Boost Control",
+            "end_node_input_index": 1
+        },
+        {
+            "start_node_title": "Boost Control",
+            "start_node_output_index": 0,
+            "end_node_title": "PPM Channel 1",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_title": "Logitech Extreme 3D",
+            "start_node_output_index": 0,
+            "end_node_title": "PPM Channel 2",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_title": "Logitech Extreme 3D",
+            "start_node_output_index": 1,
+            "end_node_title": "PPM Channel 3",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_title": "Logitech Extreme 3D",
+            "start_node_output_index": 2,
+            "end_node_title": "PPM Channel 4",
+            "end_node_input_index": 0
+        }
+    ]
+}
