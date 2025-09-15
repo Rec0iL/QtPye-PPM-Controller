@@ -12,7 +12,7 @@ from PyQt5.QtGui import (QBrush, QColor, QPainterPath, QPainter,
 from serial_manager import SerialManager
 from nodes import (BaseNode, PPMChannelNode, JoystickNode, CustomLogicNode,
                    BoostControlNode, ToggleNode, ThreePositionSwitchNode,
-                   ExpoCurveNode, MixerNode, AxisToButtonsNode)
+                   ExpoCurveNode, MixerNode, AxisToButtonsNode, SwitchGateNode)
 from connections import Connection
 
 class PortSelectionDialog(QDialog):
@@ -177,7 +177,7 @@ class PPMScene(QGraphicsScene):
             for item in selected_items:
                 # Allow JoystickNode to be deleted as well
                 if isinstance(item, (JoystickNode, CustomLogicNode, BoostControlNode, ToggleNode,
-                                     ThreePositionSwitchNode, ExpoCurveNode, MixerNode, AxisToButtonsNode)):
+                                     ThreePositionSwitchNode, ExpoCurveNode, MixerNode, AxisToButtonsNode, SwitchGateNode)):
                     for conn in list(item.connections):
                         self.remove_connection(conn)
                     self.removeItem(item)
@@ -263,6 +263,9 @@ class PPMApp(QMainWindow):
         add_axis_to_buttons_action = QAction("Axis to Buttons", self)
         add_axis_to_buttons_action.triggered.connect(self.add_axis_to_buttons_node)
         add_node_menu.addAction(add_axis_to_buttons_action)
+        add_switch_gate_action = QAction("Switch Gate", self)
+        add_switch_gate_action.triggered.connect(self.add_switch_gate_node)
+        add_node_menu.addAction(add_switch_gate_action)
 
         add_node_button = QToolButton(self)
         add_node_button.setText("Add Node")
@@ -337,6 +340,10 @@ class PPMApp(QMainWindow):
 
     def add_axis_to_buttons_node(self):
         node = AxisToButtonsNode(x=400, y=100)
+        self.scene.addItem(node)
+
+    def add_switch_gate_node(self):
+        node = SwitchGateNode(x=400, y=100)
         self.scene.addItem(node)
 
     def auto_connect(self):
@@ -458,6 +465,8 @@ class PPMApp(QMainWindow):
                         node = MixerNode(x=node_data['x'], y=node_data['y'])
                     elif node_type == "AxisToButtonsNode": # Add this case
                         node = AxisToButtonsNode(x=node_data['x'], y=node_data['y'])
+                    elif node_type == "SwitchGateNode": # Add this case
+                        node = SwitchGateNode(x=node_data['x'], y=node_data['y'])
                 if node:
                     node.id = node_id
                     self.scene.addItem(node)
