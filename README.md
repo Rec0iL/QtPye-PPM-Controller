@@ -57,6 +57,10 @@ It's ideal for controlling FPV drones, RC cars, and other robotics projects from
     ```bash
     python main.py
     ```
+    or use the included start script:
+    ```bash
+    ./start.sh
+    ```
 2.  **Connect Hardware:** Use the **Select Port** button to choose the correct serial port for your PPM adapter, then click **Connect**.
 3.  **Build Your Layout:**
     * Add new logic nodes using the **Add Node** dropdown menu.
