@@ -77,18 +77,14 @@ class PPMChannelNode(BaseNode):
         return [QRectF(scene_pos.x() - 5, scene_pos.y() - 5, 10, 10)]
 
     def set_value(self, value, input_index=0):
-        self.is_digital = (value == 0.0 or value == 1.0)
-
         if self.inverted:
             value = -value
 
         self.current_value = max(-1.0, min(1.0, value))
         self.update()
 
-        if self.is_digital:
-            ppm_value = int(1000 + self.current_value * 1000)
-        else:
-            ppm_value = int(1500 + self.current_value * 500)
+        # The single analog formula now works for all node types
+        ppm_value = int(1500 + self.current_value * 500)
 
         command = f"{self.channel_number}={ppm_value}"
         if self.serial_manager:

@@ -66,7 +66,7 @@ class ToggleNode(BaseNode):
                 "font-size: 24px; font-weight: bold; color: #FFFFFF; background-color: #4CAF50; border-radius: 5px; padding: 5px;"
             )
         else:
-            self.output_value = 0.0
+            self.output_value = -1.0 # CHANGED FROM 0.0
             self.status_label.setText("OFF")
             self.status_label.setStyleSheet(
                 "font-size: 24px; font-weight: bold; color: #FFFFFF; background-color: #D32F2F; border-radius: 5px; padding: 5px;"
