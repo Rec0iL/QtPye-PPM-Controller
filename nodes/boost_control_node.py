@@ -111,7 +111,7 @@ class BoostControlNode(BaseNode):
         try:
             self.boost_amount_us = int(self.boost_amount_edit.text())
             # Clamp boost amount to a reasonable range for PPM (e.g., 0-1000us)
-            self.boost_amount_us = max(0, min(1000, self.boost_amount_us))
+            self.boost_amount_us = max(-1000, min(1000, self.boost_amount_us))
             self.boost_amount_edit.setText(str(self.boost_amount_us))
         except ValueError:
             self.boost_amount_edit.setText(str(self.boost_amount_us))
