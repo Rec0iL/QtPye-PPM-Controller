@@ -10,7 +10,8 @@ class BoostControlNode(BaseNode):
     BOOST_STATE_COOLDOWN = 2
 
     def __init__(self, x=0, y=0, parent=None):
-        super().__init__(title="Boost Control", x=x, y=y, w=220, h=200, parent=parent)
+        # Increased height to make space for dots at the bottom
+        super().__init__(title="Boost Control", x=x, y=y, w=220, h=260, parent=parent)
         self.inputs = 2
         self.input_values = [0.0, 0.0]
         self.output_value = 0.0
@@ -21,7 +22,6 @@ class BoostControlNode(BaseNode):
         self.boost_duration_s = 2.0
         self.cooldown_duration_s = 3.0
         self.boost_amount_us = 500
-
         self.state = self.BOOST_STATE_READY
 
         self.boost_timer = QTimer()
@@ -32,70 +32,70 @@ class BoostControlNode(BaseNode):
         self.cooldown_timer.setSingleShot(True)
         self.cooldown_timer.timeout.connect(self._end_cooldown)
 
-        # UI elements
-        self.status_label = QLabel("Ready")
-        self.status_label.setStyleSheet("font-weight: bold; color: green;")
-        self.boost_duration_edit = QLineEdit(str(self.boost_duration_s))
-        self.cooldown_duration_edit = QLineEdit(str(self.cooldown_duration_s))
-        self.boost_amount_edit = QLineEdit(str(self.boost_amount_us))
-
-        self.boost_duration_edit.editingFinished.connect(self._update_boost_duration)
-        self.cooldown_duration_edit.editingFinished.connect(self._update_cooldown_duration)
-        self.boost_amount_edit.editingFinished.connect(self._update_boost_amount)
-
+        # UI elements are positioned at the top
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(10, 5, 10, 5)
         layout.addWidget(QLabel("Status:"))
+        self.status_label = QLabel("Ready")
+        self.status_label.setStyleSheet("font-weight: bold; color: green;")
         layout.addWidget(self.status_label)
 
         hbox1 = QHBoxLayout()
         hbox1.addWidget(QLabel("Boost Dur (s):"))
+        self.boost_duration_edit = QLineEdit(str(self.boost_duration_s))
         hbox1.addWidget(self.boost_duration_edit)
         layout.addLayout(hbox1)
 
         hbox2 = QHBoxLayout()
         hbox2.addWidget(QLabel("Cooldown (s):"))
+        self.cooldown_duration_edit = QLineEdit(str(self.cooldown_duration_s))
         hbox2.addWidget(self.cooldown_duration_edit)
         layout.addLayout(hbox2)
 
         hbox3 = QHBoxLayout()
         hbox3.addWidget(QLabel("Boost Amt (µs):"))
+        self.boost_amount_edit = QLineEdit(str(self.boost_amount_us))
         hbox3.addWidget(self.boost_amount_edit)
         layout.addLayout(hbox3)
 
+        self.boost_duration_edit.editingFinished.connect(self._update_boost_duration)
+        self.cooldown_duration_edit.editingFinished.connect(self._update_cooldown_duration)
+        self.boost_amount_edit.editingFinished.connect(self._update_boost_amount)
+
         proxy = QGraphicsProxyWidget(self)
         proxy.setWidget(widget)
-        proxy.setPos(5, 30)
-        proxy.resize(self.width - 10, self.height - 40)
+        proxy.setPos(10, 30)
+        proxy.resize(self.width - 20, 160)
 
-        # Define local rects for connection dots
+        # Connection dots are now positioned at the bottom
         self.input_rects = [
-            QRectF(-5, 60 - 5, 10, 10),  # Input 1 (Throttle)
-            QRectF(-5, 100 - 5, 10, 10) # Input 2 (Button)
+            QRectF(-5, 210 - 5, 10, 10),  # Input 1 (Throttle)
+            QRectF(-5, 235 - 5, 10, 10)   # Input 2 (Button)
         ]
-        self.output_rect = QRectF(self.width - 5, self.height / 2 - 5, 10, 10)
+        output_y = (210 + 235) / 2 # Center between inputs
+        self.output_rect = QRectF(self.width - 5, output_y - 5, 10, 10)
 
     def _update_boost_duration(self):
         try:
-            self.boost_duration_s = float(self.boost_duration_edit.text())
-            if self.boost_duration_s < 0: self.boost_duration_s = 0.0
+            val = float(self.boost_duration_edit.text())
+            self.boost_duration_s = max(0.0, val)
             self.boost_duration_edit.setText(str(self.boost_duration_s))
         except ValueError:
             self.boost_duration_edit.setText(str(self.boost_duration_s))
 
     def _update_cooldown_duration(self):
         try:
-            self.cooldown_duration_s = float(self.cooldown_duration_edit.text())
-            if self.cooldown_duration_s < 0: self.cooldown_duration_s = 0.0
+            val = float(self.cooldown_duration_edit.text())
+            self.cooldown_duration_s = max(0.0, val)
             self.cooldown_duration_edit.setText(str(self.cooldown_duration_s))
         except ValueError:
             self.cooldown_duration_edit.setText(str(self.cooldown_duration_s))
 
     def _update_boost_amount(self):
         try:
-            self.boost_amount_us = int(self.boost_amount_edit.text())
-            self.boost_amount_us = max(-1000, min(1000, self.boost_amount_us))
+            val = int(self.boost_amount_edit.text())
+            self.boost_amount_us = max(-1000, min(1000, val))
             self.boost_amount_edit.setText(str(self.boost_amount_us))
         except ValueError:
             self.boost_amount_edit.setText(str(self.boost_amount_us))
@@ -155,9 +155,17 @@ class BoostControlNode(BaseNode):
     def paint(self, painter, option, widget=None):
         super().paint(painter, option, widget)
         painter.setBrush(QBrush(QColor("#E0E0E0")))
-        for rect in self.input_rects:
-            painter.drawEllipse(rect.center(), 5, 5)
+        painter.setPen(QPen(QColor("#E0E0E0")))
+
+        # Draw input dots and labels
+        painter.drawEllipse(self.input_rects[0].center(), 5, 5)
+        painter.drawText(QPointF(15, self.input_rects[0].center().y() + 5), "Throttle")
+        painter.drawEllipse(self.input_rects[1].center(), 5, 5)
+        painter.drawText(QPointF(15, self.input_rects[1].center().y() + 5), "Button")
+
+        # Draw output dot and label
         painter.drawEllipse(self.output_rect.center(), 5, 5)
+        painter.drawText(QPointF(self.width - 45, self.output_rect.center().y() + 5), "Out")
 
     def get_input_dot_rects(self):
         rects = []
@@ -171,7 +179,8 @@ class BoostControlNode(BaseNode):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            if self.output_rect.contains(event.pos()):
+            output_hotspot = QRectF(self.width-10, self.output_rect.y(), 10, 10)
+            if output_hotspot.contains(event.pos()):
                 pos = self.mapToScene(self.output_rect.center())
                 self.scene().start_connection_drag(pos, self, 0)
                 event.accept()
