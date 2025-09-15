@@ -337,6 +337,7 @@ class PPMApp(QMainWindow):
         self.max_log_blocks = 500
 
         self.load_layout()
+        self.auto_connect()
 
     def add_custom_node(self, inputs):
         node = CustomLogicNode(x=400, y=100, inputs=inputs)
@@ -361,6 +362,21 @@ class PPMApp(QMainWindow):
     def add_mixer_node(self):
         node = MixerNode(x=400, y=100)
         self.scene.addItem(node)
+
+    def auto_connect(self):
+        """Attempts to automatically connect to a default serial port on startup."""
+        # This port is common for many microcontrollers on Linux
+        default_port = "/dev/ttyACM0"
+
+        available_ports = self.serial_manager.list_ports()
+        self.append_log("Attempting to auto-connect...", False)
+
+        if default_port in available_ports:
+            self.selected_port = default_port
+            self.append_log(f"Default port {default_port} found. Connecting.", False)
+            self.serial_manager.connect(self.selected_port)
+        else:
+            self.append_log(f"Default port {default_port} not found. Please select a port manually.", False)
 
     def show_port_selection(self):
         ports = self.serial_manager.list_ports()
@@ -422,20 +438,15 @@ class PPMApp(QMainWindow):
         nodes = []
         for item in self.scene.items():
             if isinstance(item, BaseNode):
-                node_data = {
-                    "type": item.__class__.__name__,
-                    "x": item.pos().x(),
-                    "y": item.pos().y(),
-                    "title": item.title,
-                }
-                nodes.append(node_data)
+                # Use the new get_state() method to get all node data
+                nodes.append(item.get_state())
 
         connections = []
         for conn in self.scene.connections:
             connections.append({
-                "start_node_title": conn.start_node.title,
+                "start_node_id": conn.start_node.id, # Use unique ID
                 "start_node_output_index": conn.start_index,
-                "end_node_title": conn.end_node.title,
+                "end_node_id": conn.end_node.id, # Use unique ID
                 "end_node_input_index": conn.end_index
             })
 
@@ -444,73 +455,70 @@ class PPMApp(QMainWindow):
         print("Layout saved.")
         self.append_log("Layout saved to layout.json", False)
 
+
     def load_layout(self):
         try:
             with open("layout.json", "r") as f:
                 data = json.load(f)
 
+            # --- Clear existing custom nodes and connections ---
             for item in list(self.scene.items()):
-                if isinstance(item, (Connection, CustomLogicNode, BoostControlNode,
-                                     ToggleNode, ThreePositionSwitchNode,
-                                     ExpoCurveNode, MixerNode)):
-                    if isinstance(item, Connection):
-                        self.remove_connection(item)
-                    else:
-                        self.scene.removeItem(item)
+                if isinstance(item, Connection):
+                    self.remove_connection(item)
+                elif not isinstance(item, (JoystickNode, PPMChannelNode)):
+                    self.scene.removeItem(item)
 
-            node_map = {item.title: item for item in self.scene.items() if isinstance(item, BaseNode)}
+            # --- Create a map of existing default nodes by title for repositioning ---
+            node_map_by_title = {item.title: item for item in self.scene.items() if isinstance(item, BaseNode)}
 
-            def create_node(node_data):
-                node_type = node_data["type"]
-                x = node_data["x"]
-                y = node_data["y"]
-                title = node_data["title"]
+            # This map will hold all nodes, identified by their unique ID
+            node_map_by_id = {}
 
-                if title in node_map:
-                    node = node_map[title]
-                    node.setPos(x, y)
-                    return node
-
-                node = None
-                if node_type == "JoystickNode" and pygame.joystick.get_count() > 0:
-                    node = JoystickNode(0, x, y)
-                elif node_type == "PPMChannelNode":
-                    try:
-                        channel = int(title.split(' ')[2])
-                        node = PPMChannelNode(channel, x, y, serial_manager=self.serial_manager)
-                    except (IndexError, ValueError):
-                        return None
-                elif node_type == "CustomLogicNode":
-                    node = CustomLogicNode(x=x, y=y, inputs=2)
-                elif node_type == "BoostControlNode":
-                    node = BoostControlNode(x=x, y=y)
-                elif node_type == "ToggleNode":
-                    node = ToggleNode(x=x, y=y)
-                elif node_type == "ThreePositionSwitchNode":
-                    node = ThreePositionSwitchNode(x=x, y=y)
-                elif node_type == "ExpoCurveNode":
-                    node = ExpoCurveNode(x=x, y=y)
-                elif node_type == "MixerNode":
-                    node = MixerNode(x=x, y=y)
-
-                if node:
-                    self.scene.addItem(node)
-                    node.title = title
-                    return node
-
+            # --- First Pass: Create/Reposition all nodes ---
             for node_data in data["nodes"]:
-                node = create_node(node_data)
+                node_type = node_data["type"]
+                title = node_data["title"]
+                node_id = node_data["id"]
+                node = None
+
+                # If a default node exists, reposition it
+                if title in node_map_by_title:
+                    node = node_map_by_title[title]
+                    node.setPos(node_data['x'], node_data['y'])
+                else:
+                    # Create a new custom node
+                    if node_type == "CustomLogicNode":
+                        num_inputs = node_data.get('inputs', 1) # Get input count, default to 1
+                        node = CustomLogicNode(x=node_data['x'], y=node_data['y'], inputs=num_inputs)
+                        node.formula_line_edit.setText(node_data.get('formula', ''))
+                    elif node_type == "BoostControlNode":
+                        node = BoostControlNode(x=node_data['x'], y=node_data['y'])
+                    elif node_type == "ToggleNode":
+                        node = ToggleNode(x=node_data['x'], y=node_data['y'])
+                    elif node_type == "ThreePositionSwitchNode":
+                        node = ThreePositionSwitchNode(x=node_data['x'], y=node_data['y'])
+                    elif node_type == "ExpoCurveNode":
+                        node = ExpoCurveNode(x=node_data['x'], y=node_data['y'])
+                    elif node_type == "MixerNode":
+                        node = MixerNode(x=node_data['x'], y=node_data['y'])
+
                 if node:
-                    node_map[node.title] = node
+                    node.id = node_id # Assign the saved ID
+                    self.scene.addItem(node)
+                    node_map_by_id[node.id] = node
 
+            # --- Second Pass: Create all connections using unique IDs ---
             for conn_data in data["connections"]:
-                start_node_title = conn_data["start_node_title"]
-                end_node_title = conn_data["end_node_title"]
+                start_node_id = conn_data["start_node_id"]
+                end_node_id = conn_data["end_node_id"]
 
-                if start_node_title in node_map and end_node_title in node_map:
-                    start_node = node_map[start_node_title]
-                    end_node = node_map[end_node_title]
-                    self.scene.create_connection(start_node, conn_data["start_node_output_index"], end_node, conn_data["end_node_input_index"])
+                if start_node_id in node_map_by_id and end_node_id in node_map_by_id:
+                    start_node = node_map_by_id[start_node_id]
+                    end_node = node_map_by_id[end_node_id]
+                    self.scene.create_connection(
+                        start_node, conn_data["start_node_output_index"],
+                        end_node, conn_data["end_node_input_index"]
+                    )
 
             print("Layout loaded.")
             self.append_log("Layout loaded from layout.json", False)

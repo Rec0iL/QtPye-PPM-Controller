@@ -115,3 +115,11 @@ class CustomLogicNode(BaseNode):
                 event.accept()
                 return
         super().mousePressEvent(event)
+
+    def get_state(self):
+        # Start with the base node's state
+        state = super().get_state()
+        # Add custom properties for this node
+        state['inputs'] = self.inputs
+        state['formula'] = self.formula_line_edit.text()
+        return state

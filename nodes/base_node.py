@@ -1,4 +1,5 @@
 # nodes/base_node.py
+import uuid
 import pygame
 from PyQt5.QtWidgets import QGraphicsItem, QGraphicsProxyWidget, QCheckBox, QLineEdit, QLabel, QWidget, QVBoxLayout, QPushButton, QHBoxLayout
 from PyQt5.QtCore import QRectF, QPointF, Qt, QTimer, pyqtSignal, QObject, QVariant
@@ -10,6 +11,7 @@ class NodeSignalEmitter(QObject):
 class BaseNode(QGraphicsItem):
     def __init__(self, title="Node", x=0, y=0, w=150, h=100, parent=None):
         super().__init__(parent)
+        self.id = str(uuid.uuid4())
         self.title = title
         self.setPos(x, y)
         self.width = w
@@ -73,3 +75,17 @@ class BaseNode(QGraphicsItem):
 
     def remove_connection(self, connection_to_remove):
         self.connections.remove(connection_to_remove)
+
+    def get_state(self):
+        """Returns a dictionary of data to be saved."""
+        return {
+            'id': self.id,
+            'type': self.__class__.__name__,
+            'title': self.title,
+            'x': self.pos().x(),
+            'y': self.pos().y()
+        }
+
+    def set_state(self, data):
+        """Restores node state from a dictionary."""
+        self.setPos(data['x'], data['y'])

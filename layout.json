@@ -1,137 +1,116 @@
 {
     "nodes": [
         {
-            "type": "ExpoCurveNode",
-            "x": 380.0,
-            "y": 227.0,
-            "title": "Expo Curve"
+            "id": "82ad5247-00c8-47a9-86aa-e01545fab1c2",
+            "type": "CustomLogicNode",
+            "title": "Custom Logic",
+            "x": 404.0,
+            "y": 287.0,
+            "inputs": 2,
+            "formula": "Y = X1*0.2 + X2*0.4"
         },
         {
-            "type": "ToggleNode",
-            "x": 426.0,
-            "y": 452.0,
-            "title": "Toggle Switch"
+            "id": "83f90582-52ff-4ca1-ba0d-0a2aeb711893",
+            "type": "CustomLogicNode",
+            "title": "Custom Logic",
+            "x": 400.0,
+            "y": 100.0,
+            "inputs": 1,
+            "formula": "Y = X1*0.3"
         },
         {
-            "type": "ThreePositionSwitchNode",
-            "x": 419.0,
-            "y": 575.0,
-            "title": "3-Position Switch"
-        },
-        {
+            "id": "50538174-dcf7-4450-9caa-d0e0f40a8979",
             "type": "PPMChannelNode",
+            "title": "PPM Channel 8",
             "x": 800.0,
-            "y": 820.0,
-            "title": "PPM Channel 8"
+            "y": 820.0
         },
         {
+            "id": "aefc8b23-1db4-43b0-be07-18e779fad523",
             "type": "PPMChannelNode",
+            "title": "PPM Channel 7",
             "x": 800.0,
-            "y": 710.0,
-            "title": "PPM Channel 7"
+            "y": 710.0
         },
         {
+            "id": "0710253d-3194-42d5-be80-fd2c5117ba45",
             "type": "PPMChannelNode",
+            "title": "PPM Channel 6",
             "x": 800.0,
-            "y": 600.0,
-            "title": "PPM Channel 6"
+            "y": 600.0
         },
         {
+            "id": "966c8429-806c-441d-ac00-0bc60f12fbcd",
             "type": "PPMChannelNode",
+            "title": "PPM Channel 5",
             "x": 800.0,
-            "y": 490.0,
-            "title": "PPM Channel 5"
+            "y": 490.0
         },
         {
+            "id": "9bcf68f4-9c47-448a-98fc-e1743db2ad1a",
             "type": "PPMChannelNode",
+            "title": "PPM Channel 4",
             "x": 800.0,
-            "y": 380.0,
-            "title": "PPM Channel 4"
+            "y": 380.0
         },
         {
+            "id": "8bd8879f-c1d7-48bf-969b-c07320270e71",
             "type": "PPMChannelNode",
+            "title": "PPM Channel 3",
             "x": 800.0,
-            "y": 270.0,
-            "title": "PPM Channel 3"
+            "y": 270.0
         },
         {
+            "id": "87b60b66-9a62-4dc1-9a6a-dc658d91cd04",
             "type": "PPMChannelNode",
+            "title": "PPM Channel 2",
             "x": 800.0,
-            "y": 160.0,
-            "title": "PPM Channel 2"
+            "y": 160.0
         },
         {
+            "id": "8f8f71ec-0d46-425b-a568-d61988b0d90c",
             "type": "PPMChannelNode",
+            "title": "PPM Channel 1",
             "x": 800.0,
-            "y": 50.0,
-            "title": "PPM Channel 1"
+            "y": 50.0
         },
         {
+            "id": "fbad8915-6dad-49cb-8022-c5ea82527e85",
             "type": "JoystickNode",
+            "title": "Logitech Extreme 3D",
             "x": 50.0,
-            "y": 50.0,
-            "title": "Logitech Extreme 3D"
+            "y": 50.0
         }
     ],
     "connections": [
         {
-            "start_node_title": "Logitech Extreme 3D",
-            "start_node_output_index": 7,
-            "end_node_title": "3-Position Switch",
+            "start_node_id": "fbad8915-6dad-49cb-8022-c5ea82527e85",
+            "start_node_output_index": 0,
+            "end_node_id": "83f90582-52ff-4ca1-ba0d-0a2aeb711893",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "83f90582-52ff-4ca1-ba0d-0a2aeb711893",
+            "start_node_output_index": 0,
+            "end_node_id": "8f8f71ec-0d46-425b-a568-d61988b0d90c",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "fbad8915-6dad-49cb-8022-c5ea82527e85",
+            "start_node_output_index": 1,
+            "end_node_id": "82ad5247-00c8-47a9-86aa-e01545fab1c2",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "fbad8915-6dad-49cb-8022-c5ea82527e85",
+            "start_node_output_index": 2,
+            "end_node_id": "82ad5247-00c8-47a9-86aa-e01545fab1c2",
             "end_node_input_index": 1
         },
         {
-            "start_node_title": "Logitech Extreme 3D",
-            "start_node_output_index": 9,
-            "end_node_title": "3-Position Switch",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_title": "3-Position Switch",
+            "start_node_id": "82ad5247-00c8-47a9-86aa-e01545fab1c2",
             "start_node_output_index": 0,
-            "end_node_title": "PPM Channel 6",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_title": "Logitech Extreme 3D",
-            "start_node_output_index": 10,
-            "end_node_title": "Toggle Switch",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_title": "Toggle Switch",
-            "start_node_output_index": 0,
-            "end_node_title": "PPM Channel 5",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_title": "Logitech Extreme 3D",
-            "start_node_output_index": 1,
-            "end_node_title": "PPM Channel 2",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_title": "Logitech Extreme 3D",
-            "start_node_output_index": 3,
-            "end_node_title": "PPM Channel 3",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_title": "Logitech Extreme 3D",
-            "start_node_output_index": 2,
-            "end_node_title": "PPM Channel 4",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_title": "Logitech Extreme 3D",
-            "start_node_output_index": 0,
-            "end_node_title": "Expo Curve",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_title": "Expo Curve",
-            "start_node_output_index": 0,
-            "end_node_title": "PPM Channel 1",
+            "end_node_id": "87b60b66-9a62-4dc1-9a6a-dc658d91cd04",
             "end_node_input_index": 0
         }
     ]
