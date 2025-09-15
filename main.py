@@ -49,11 +49,9 @@ class ConnectionView(QGraphicsView):
         if event.modifiers() == Qt.ControlModifier:
             zoom_in_factor = 1.25
             zoom_out_factor = 1 / zoom_in_factor
-
             zoom_factor = zoom_out_factor
             if event.angleDelta().y() > 0:
                 zoom_factor = zoom_in_factor
-
             self.scale(zoom_factor, zoom_factor)
         else:
             super().wheelEvent(event)
@@ -105,18 +103,14 @@ class PPMScene(QGraphicsScene):
     def remove_connection(self, conn):
         start_node = conn.start_node
         end_node = conn.end_node
-
         start_node.remove_connection(conn)
         end_node.set_input_occupied(conn.end_index, False)
 
-        # Disconnect the specific slot associated with this connection
         if hasattr(conn, 'slot') and conn.slot is not None:
             try:
                 start_node.output_signals[conn.start_index].output_signal.disconnect(conn.slot)
             except TypeError:
-                # This can happen if the signal is already gone, which is fine.
                 pass
-
         self.removeItem(conn)
         if conn in self.connections:
             self.connections.remove(conn)
@@ -124,11 +118,9 @@ class PPMScene(QGraphicsScene):
     def start_connection_drag(self, start_pos, start_node, start_index):
         self.connection_start_node = start_node
         self.connection_start_index = start_index
-
         self.temp_connection_line = QGraphicsPathItem()
         self.temp_connection_line.setPen(QPen(QColor("#00BFFF"), 2, Qt.DotLine))
         self.addItem(self.temp_connection_line)
-
         self.update_temp_line(start_pos, start_pos)
 
     def mouseMoveEvent(self, event):
@@ -162,7 +154,6 @@ class PPMScene(QGraphicsScene):
                             break
                     if valid_drop:
                         break
-
             self.removeItem(self.temp_connection_line)
             self.temp_connection_line = None
             self.connection_start_node = None
@@ -173,30 +164,22 @@ class PPMScene(QGraphicsScene):
         new_connection = Connection(start_node, start_index, end_node, end_index)
         self.addItem(new_connection)
         self.connections.append(new_connection)
-
         end_node.set_input_occupied(end_index, True)
-
         if start_index < len(start_node.output_signals):
-            # Create a lambda, store a reference to it, and then connect it
             slot = lambda value: end_node.set_value(value, end_index)
             new_connection.slot = slot
             start_node.output_signals[start_index].output_signal.connect(slot)
-
             print(f"Connected {start_node.title} output {start_index} to {end_node.title} input {end_index}")
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Delete:
             selected_items = self.selectedItems()
             for item in selected_items:
-                # Ensure we are only deleting deletable custom nodes
-                if isinstance(item, (CustomLogicNode, BoostControlNode, ToggleNode,
+                # Allow JoystickNode to be deleted as well
+                if isinstance(item, (JoystickNode, CustomLogicNode, BoostControlNode, ToggleNode,
                                      ThreePositionSwitchNode, ExpoCurveNode, MixerNode)):
-
-                    # First, remove all connections attached to this node
-                    for conn in list(item.connections): # Use list() to create a copy
+                    for conn in list(item.connections):
                         self.remove_connection(conn)
-
-                    # Now, remove the node itself
                     self.removeItem(item)
         else:
             super().keyPressEvent(event)
@@ -216,26 +199,17 @@ class PPMApp(QMainWindow):
         self.serial_manager.log_message.connect(self.append_log)
 
         self.selected_port = None
-
         self.scene = PPMScene(self)
         self.view = ConnectionView(self.scene)
         self.setCentralWidget(self.view)
 
-        # -- Default Node Setup --
-        if pygame.joystick.get_count() > 0:
-            self.joystick_node = JoystickNode(0, 50, 50)
-            self.scene.addItem(self.joystick_node)
-        else:
-            self.joystick_node = None
-            self.append_log("No joystick detected. Cannot create Joystick node.", False)
-
+        # Default PPM nodes are still created
         self.ppm_nodes = []
         for i in range(8):
             node = PPMChannelNode(i + 1, 800, 50 + i * 110, serial_manager=self.serial_manager)
             self.ppm_nodes.append(node)
             self.scene.addItem(node)
 
-        # -- Serial Console Dock Widget --
         self.serial_console = QDockWidget("Serial Console", self)
         self.serial_console.setAllowedAreas(Qt.BottomDockWidgetArea | Qt.TopDockWidgetArea)
         console_widget = QWidget()
@@ -243,45 +217,46 @@ class PPMApp(QMainWindow):
         self.console_text = QTextEdit()
         self.console_text.setReadOnly(True)
         console_layout.addWidget(self.console_text)
-
         raw_checkbox = QCheckBox("Raw")
         raw_checkbox.stateChanged.connect(self.toggle_raw_mode)
         console_layout.addWidget(raw_checkbox)
-
         self.serial_console.setWidget(console_widget)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.serial_console)
-        self.serial_console.setVisible(False) # Hide the console by default
+        self.serial_console.setVisible(False)
 
-        # -- Toolbar Setup --
         toolbar = QToolBar("Controls")
         self.addToolBar(toolbar)
 
-        # -- Add Node Dropdown Menu --
+        # Build the "Add Node" menu, dynamically adding joystick options
         add_node_menu = QMenu(self)
-        add_single_input_node_action = QAction("1-Input Node", self)
+        joystick_count = pygame.joystick.get_count()
+        if joystick_count > 0:
+            for i in range(joystick_count):
+                joystick = pygame.joystick.Joystick(i)
+                joystick.init()
+                action = QAction(f"Input: {joystick.get_name()} (ID {i})", self)
+                action.triggered.connect(lambda checked, jid=i: self.add_joystick_node(jid))
+                add_node_menu.addAction(action)
+            add_node_menu.addSeparator()
+
+        add_single_input_node_action = QAction("1-Input Logic", self)
         add_single_input_node_action.triggered.connect(lambda: self.add_custom_node(1))
         add_node_menu.addAction(add_single_input_node_action)
-
-        add_two_input_node_action = QAction("2-Input Node", self)
+        add_two_input_node_action = QAction("2-Input Logic", self)
         add_two_input_node_action.triggered.connect(lambda: self.add_custom_node(2))
         add_node_menu.addAction(add_two_input_node_action)
-
         add_boost_node_action = QAction("Boost Node", self)
         add_boost_node_action.triggered.connect(self.add_boost_node)
         add_node_menu.addAction(add_boost_node_action)
-
         add_toggle_node_action = QAction("Toggle Switch", self)
         add_toggle_node_action.triggered.connect(self.add_toggle_node)
         add_node_menu.addAction(add_toggle_node_action)
-
         add_3pos_switch_action = QAction("3-Position Switch", self)
         add_3pos_switch_action.triggered.connect(self.add_three_position_switch_node)
         add_node_menu.addAction(add_3pos_switch_action)
-
         add_expo_node_action = QAction("Expo Curve", self)
         add_expo_node_action.triggered.connect(self.add_expo_node)
         add_node_menu.addAction(add_expo_node_action)
-
         add_mixer_node_action = QAction("Mixer", self)
         add_mixer_node_action.triggered.connect(self.add_mixer_node)
         add_node_menu.addAction(add_mixer_node_action)
@@ -292,52 +267,46 @@ class PPMApp(QMainWindow):
         add_node_button.setMenu(add_node_menu)
         add_node_button.setPopupMode(QToolButton.InstantPopup)
         toolbar.addWidget(add_node_button)
-
         toolbar.addSeparator()
 
-        # -- Serial & Layout Actions (Reordered with Icons) --
         select_port_action = QAction(QIcon.fromTheme("folder-remote"), "Select Port", self)
         select_port_action.triggered.connect(self.show_port_selection)
         toolbar.addAction(select_port_action)
-
         self.connect_action = QAction(QIcon.fromTheme("network-connect"), "Connect", self)
         self.connect_action.triggered.connect(self.connect_to_port)
         toolbar.addAction(self.connect_action)
-
         self.disconnect_action = QAction(QIcon.fromTheme("network-disconnect"), "Disconnect", self)
         self.disconnect_action.triggered.connect(self.serial_manager.disconnect)
         toolbar.addAction(self.disconnect_action)
         self.disconnect_action.setEnabled(False)
-
         self.load_action = QAction(QIcon.fromTheme("document-open"), "Load Layout", self)
         self.load_action.triggered.connect(self.load_layout)
         toolbar.addAction(self.load_action)
-
         self.save_action = QAction(QIcon.fromTheme("document-save"), "Save Layout", self)
         self.save_action.triggered.connect(self.save_layout)
         toolbar.addAction(self.save_action)
-
         toolbar.addSeparator()
-
-        # -- Utility Actions --
         self.remove_all_action = QAction(QIcon.fromTheme("edit-clear"), "Remove All Connections", self)
         self.remove_all_action.triggered.connect(self.scene.remove_all_connections)
         toolbar.addAction(self.remove_all_action)
-
         toggle_console_action = self.serial_console.toggleViewAction()
         toggle_console_action.setText("Toggle Console")
         toggle_console_action.setIcon(QIcon.fromTheme("utilities-terminal"))
         toolbar.addAction(toggle_console_action)
 
-        # -- Status Bar --
         self.statusBar()
         self.status_label = QLabel("Disconnected")
         self.statusBar().addWidget(self.status_label)
-
         self.max_log_blocks = 500
-
         self.load_layout()
         self.auto_connect()
+
+    def add_joystick_node(self, joystick_id):
+        try:
+            node = JoystickNode(joystick_id, x=50, y=50)
+            self.scene.addItem(node)
+        except ValueError as e:
+            print(f"Error adding joystick {joystick_id}: {e}")
 
     def add_custom_node(self, inputs):
         node = CustomLogicNode(x=400, y=100, inputs=inputs)
@@ -364,13 +333,9 @@ class PPMApp(QMainWindow):
         self.scene.addItem(node)
 
     def auto_connect(self):
-        """Attempts to automatically connect to a default serial port on startup."""
-        # This port is common for many microcontrollers on Linux
         default_port = "/dev/ttyACM0"
-
         available_ports = self.serial_manager.list_ports()
         self.append_log("Attempting to auto-connect...", False)
-
         if default_port in available_ports:
             self.selected_port = default_port
             self.append_log(f"Default port {default_port} found. Connecting.", False)
@@ -406,29 +371,21 @@ class PPMApp(QMainWindow):
             self.disconnect_action.setEnabled(False)
 
     def append_log(self, message, is_raw):
-        # Limit the number of lines in the console to prevent slowdowns
         document = self.console_text.document()
         if document.blockCount() > self.max_log_blocks:
             cursor = self.console_text.textCursor()
             cursor.movePosition(cursor.Start)
-            # Select the excess blocks from the beginning
             cursor.movePosition(cursor.NextBlock, cursor.KeepAnchor,
                                 document.blockCount() - self.max_log_blocks)
             cursor.removeSelectedText()
-            cursor.movePosition(cursor.End) # Ensure cursor is at the end
-
-        # Move cursor to the end before inserting text
+            cursor.movePosition(cursor.End)
         cursor = self.console_text.textCursor()
         cursor.movePosition(cursor.End)
         self.console_text.setTextCursor(cursor)
-
-        # Insert the new message
         if is_raw:
             self.console_text.insertHtml(f"<span style='color: #FFC107;'>[RAW] {message}</span><br>")
         else:
             self.console_text.insertPlainText(message + '\n')
-
-        # Ensure the view is scrolled to the bottom
         self.console_text.verticalScrollBar().setValue(self.console_text.verticalScrollBar().maximum())
 
     def toggle_raw_mode(self, state):
@@ -438,57 +395,48 @@ class PPMApp(QMainWindow):
         nodes = []
         for item in self.scene.items():
             if isinstance(item, BaseNode):
-                # Use the new get_state() method to get all node data
                 nodes.append(item.get_state())
-
         connections = []
         for conn in self.scene.connections:
             connections.append({
-                "start_node_id": conn.start_node.id, # Use unique ID
+                "start_node_id": conn.start_node.id,
                 "start_node_output_index": conn.start_index,
-                "end_node_id": conn.end_node.id, # Use unique ID
+                "end_node_id": conn.end_node.id,
                 "end_node_input_index": conn.end_index
             })
-
         with open("layout.json", "w") as f:
             json.dump({"nodes": nodes, "connections": connections}, f, indent=4)
         print("Layout saved.")
         self.append_log("Layout saved to layout.json", False)
 
-
     def load_layout(self):
         try:
             with open("layout.json", "r") as f:
                 data = json.load(f)
-
-            # --- Clear existing custom nodes and connections ---
             for item in list(self.scene.items()):
                 if isinstance(item, Connection):
                     self.remove_connection(item)
                 elif not isinstance(item, (JoystickNode, PPMChannelNode)):
                     self.scene.removeItem(item)
-
-            # --- Create a map of existing default nodes by title for repositioning ---
             node_map_by_title = {item.title: item for item in self.scene.items() if isinstance(item, BaseNode)}
-
-            # This map will hold all nodes, identified by their unique ID
             node_map_by_id = {}
-
-            # --- First Pass: Create/Reposition all nodes ---
             for node_data in data["nodes"]:
                 node_type = node_data["type"]
                 title = node_data["title"]
                 node_id = node_data["id"]
                 node = None
-
-                # If a default node exists, reposition it
                 if title in node_map_by_title:
                     node = node_map_by_title[title]
                     node.setPos(node_data['x'], node_data['y'])
                 else:
-                    # Create a new custom node
-                    if node_type == "CustomLogicNode":
-                        num_inputs = node_data.get('inputs', 1) # Get input count, default to 1
+                    if node_type == "JoystickNode":
+                        joystick_id = node_data.get('joystick_id', 0)
+                        if joystick_id < pygame.joystick.get_count():
+                            node = JoystickNode(joystick_id, node_data['x'], node_data['y'])
+                        else:
+                            print(f"Could not create JoystickNode: ID {joystick_id} not connected.")
+                    elif node_type == "CustomLogicNode":
+                        num_inputs = node_data.get('inputs', 1)
                         node = CustomLogicNode(x=node_data['x'], y=node_data['y'], inputs=num_inputs)
                         node.formula_line_edit.setText(node_data.get('formula', ''))
                     elif node_type == "BoostControlNode":
@@ -501,17 +449,13 @@ class PPMApp(QMainWindow):
                         node = ExpoCurveNode(x=node_data['x'], y=node_data['y'])
                     elif node_type == "MixerNode":
                         node = MixerNode(x=node_data['x'], y=node_data['y'])
-
                 if node:
-                    node.id = node_id # Assign the saved ID
+                    node.id = node_id
                     self.scene.addItem(node)
                     node_map_by_id[node.id] = node
-
-            # --- Second Pass: Create all connections using unique IDs ---
             for conn_data in data["connections"]:
                 start_node_id = conn_data["start_node_id"]
                 end_node_id = conn_data["end_node_id"]
-
                 if start_node_id in node_map_by_id and end_node_id in node_map_by_id:
                     start_node = node_map_by_id[start_node_id]
                     end_node = node_map_by_id[end_node_id]
@@ -519,7 +463,6 @@ class PPMApp(QMainWindow):
                         start_node, conn_data["start_node_output_index"],
                         end_node, conn_data["end_node_input_index"]
                     )
-
             print("Layout loaded.")
             self.append_log("Layout loaded from layout.json", False)
         except FileNotFoundError:

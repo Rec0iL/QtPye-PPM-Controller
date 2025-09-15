@@ -89,3 +89,6 @@ class PPMChannelNode(BaseNode):
         command = f"{self.channel_number}={ppm_value}"
         if self.serial_manager:
             self.serial_manager.send_command(command)
+
+    def get_hotspot_rects(self):
+        return [self.input_rect]

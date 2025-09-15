@@ -91,11 +91,20 @@ class ToggleNode(BaseNode):
     def get_output_dot_positions(self):
         return [self.mapToScene(QPointF(self.width, self.height / 2))]
 
+    def get_hotspot_rects(self):
+        return [
+            QRectF(-5, self.height / 2 - 5, 10, 10), # Input
+            QRectF(self.width - 5, self.height / 2 - 5, 10, 10) # Output
+        ]
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            output_dot_rect = QRectF(self.width - 10, self.height / 2 - 5, 10, 10)
-            if output_dot_rect.contains(event.pos()):
-                self.scene().start_connection_drag(self.mapToScene(event.pos()), self, 0)
+            output_hotspot = QRectF(self.width - 10, self.height / 2 - 5, 10, 10)
+            if output_hotspot.contains(event.pos()):
+                pos = self.mapToScene(output_hotspot.center())
+                self.scene().start_connection_drag(pos, self, 0)
                 event.accept()
                 return
         super().mousePressEvent(event)
+
+

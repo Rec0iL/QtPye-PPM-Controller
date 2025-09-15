@@ -1,9 +1,8 @@
 # nodes/base_node.py
 import uuid
-import pygame
-from PyQt5.QtWidgets import QGraphicsItem, QGraphicsProxyWidget, QCheckBox, QLineEdit, QLabel, QWidget, QVBoxLayout, QPushButton, QHBoxLayout
-from PyQt5.QtCore import QRectF, QPointF, Qt, QTimer, pyqtSignal, QObject, QVariant
-from PyQt5.QtGui import QBrush, QColor, QPen, QFont, QFontMetrics
+from PyQt5.QtWidgets import QGraphicsItem
+from PyQt5.QtCore import QRectF, QPointF, Qt, pyqtSignal, QObject
+from PyQt5.QtGui import QBrush, QColor, QPen
 
 class NodeSignalEmitter(QObject):
     output_signal = pyqtSignal(float, int)
@@ -17,13 +16,12 @@ class BaseNode(QGraphicsItem):
         self.width = w
         self.height = h
 
+        self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemIsSelectable)
         self.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
+        self.setAcceptHoverEvents(True) # Enable hover events
 
         self.rect = QRectF(0, 0, self.width, self.height)
-        self.is_dragging = False
-        self.drag_start_pos = QPointF()
-
         self.connections = []
         self.inputs_occupied = [False]
 
@@ -45,8 +43,8 @@ class BaseNode(QGraphicsItem):
         painter.drawRoundedRect(self.rect, 10, 10)
 
         painter.setPen(QPen(QColor("#E0E0E0")))
-        title_rect = self.rect.adjusted(5, 5, -5, -5)
-        painter.drawText(title_rect, Qt.AlignLeft | Qt.AlignTop, self.title)
+        title_rect = QRectF(0, 5, self.width, 25)
+        painter.drawText(title_rect, Qt.AlignCenter, self.title)
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
@@ -54,30 +52,11 @@ class BaseNode(QGraphicsItem):
                 conn.update_path()
         return super().itemChange(change, value)
 
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.is_dragging = True
-            self.drag_start_pos = event.pos()
-            event.accept()
-        super().mousePressEvent(event)
-
-    def mouseMoveEvent(self, event):
-        if self.is_dragging:
-            new_pos = self.pos() + (event.pos() - self.drag_start_pos)
-            self.setPos(new_pos)
-        super().mouseMoveEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        if self.is_dragging:
-            self.is_dragging = False
-            event.accept()
-        super().mouseReleaseEvent(event)
-
     def remove_connection(self, connection_to_remove):
-        self.connections.remove(connection_to_remove)
+        if connection_to_remove in self.connections:
+            self.connections.remove(connection_to_remove)
 
     def get_state(self):
-        """Returns a dictionary of data to be saved."""
         return {
             'id': self.id,
             'type': self.__class__.__name__,
@@ -87,5 +66,21 @@ class BaseNode(QGraphicsItem):
         }
 
     def set_state(self, data):
-        """Restores node state from a dictionary."""
         self.setPos(data['x'], data['y'])
+
+    def get_hotspot_rects(self):
+        """Child classes must override this to return their connection dot hitboxes."""
+        return []
+
+    def hoverMoveEvent(self, event):
+        """Enable/disable dragging based on cursor position."""
+        hotspots = self.get_hotspot_rects()
+        is_over_hotspot = any(rect.contains(event.pos()) for rect in hotspots)
+
+        if is_over_hotspot:
+            self.setFlag(QGraphicsItem.ItemIsMovable, False)
+            self.setCursor(Qt.PointingHandCursor)
+        else:
+            self.setFlag(QGraphicsItem.ItemIsMovable, True)
+            self.setCursor(Qt.ArrowCursor)
+        super().hoverMoveEvent(event)

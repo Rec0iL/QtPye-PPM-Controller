@@ -1,12 +1,13 @@
 # nodes/custom_logic_node.py
-from PyQt5.QtWidgets import QGraphicsItem, QGraphicsProxyWidget, QCheckBox, QLineEdit, QLabel, QWidget, QVBoxLayout, QPushButton, QHBoxLayout
-from PyQt5.QtCore import QRectF, QPointF, Qt, QTimer, pyqtSignal, QObject, QVariant
-from PyQt5.QtGui import QBrush, QColor, QPen, QFont, QFontMetrics
+from PyQt5.QtWidgets import QGraphicsProxyWidget, QLineEdit, QLabel, QWidget, QVBoxLayout
+from PyQt5.QtCore import QRectF, QPointF, Qt
+from PyQt5.QtGui import QBrush, QColor, QPen
 from .base_node import BaseNode, NodeSignalEmitter
 
 class CustomLogicNode(BaseNode):
     def __init__(self, x=0, y=0, inputs=1, parent=None):
-        super().__init__(title="Custom Logic", x=x, y=y, w=250, h=150, parent=parent)
+        h = 110 + (inputs - 1) * 20 # Dynamic height
+        super().__init__(title="Custom Logic", x=x, y=y, w=250, h=h, parent=parent)
         self.inputs = inputs
         self.input_values = [0.0] * inputs
         self.output_value = 0.0
@@ -16,7 +17,6 @@ class CustomLogicNode(BaseNode):
         self.inputs_occupied = [False] * self.inputs
 
         self.formula_line_edit = QLineEdit()
-
         if self.inputs == 1:
             self.formula_line_edit.setText("Y = X1")
         else:
@@ -29,27 +29,25 @@ class CustomLogicNode(BaseNode):
         layout = QVBoxLayout(widget)
         layout.addWidget(self.formula_label)
         layout.addWidget(self.formula_line_edit)
-
         proxy = QGraphicsProxyWidget(self)
         proxy.setWidget(widget)
-        proxy.setPos(15, 40)
+        proxy.setPos(15, 35)
         proxy.resize(self.width - 30, 80)
 
-        y_offset = 40
-        line_height = 20
+        # Define local rects for connection dots
         self.input_rects = []
+        y_offset = 55
         for i in range(self.inputs):
-            y = y_offset + i * line_height + 5
-            self.input_rects.append(QRectF(-5, y - 5, 10, 10))
+            self.input_rects.append(QRectF(-5, y_offset + (i * 20) - 5, 10, 10))
 
-    def is_input_occupied(self, index):
-        if index < len(self.inputs_occupied):
-            return self.inputs_occupied[index]
-        return False
+        output_y = y_offset + ((self.inputs - 1) * 20) / 2
+        self.output_rect = QRectF(self.width - 5, output_y - 5, 10, 10)
 
-    def set_input_occupied(self, index, occupied):
-        if index < len(self.inputs_occupied):
-            self.inputs_occupied[index] = occupied
+    def get_state(self):
+        state = super().get_state()
+        state['inputs'] = self.inputs
+        state['formula'] = self.formula_line_edit.text()
+        return state
 
     def set_value(self, value, input_index=0):
         if input_index < len(self.input_values):
@@ -57,69 +55,53 @@ class CustomLogicNode(BaseNode):
             self.evaluate_formula()
 
     def evaluate_formula(self):
-        local_vars = {"X1": self.input_values[0]}
-        if self.inputs > 1:
-            local_vars["X2"] = self.input_values[1]
+        local_vars = {}
+        for i, val in enumerate(self.input_values):
+            local_vars[f"X{i+1}"] = val
 
         formula_text = self.formula_line_edit.text().strip()
-
         if formula_text.startswith("Y ="):
             formula_text = formula_text[3:].strip()
 
         try:
             result = eval(formula_text, {"__builtins__": None}, local_vars)
             self.output_value = float(result)
-            self.output_signal.output_signal.emit(self.output_value, 0)
-            self.update()
         except Exception as e:
             print(f"Error evaluating formula: {e}")
             self.output_value = 0.0
-            self.output_signal.output_signal.emit(self.output_value, 0)
-            self.update()
+
+        self.output_signal.output_signal.emit(self.output_value, 0)
+        self.update()
+
+    def get_hotspot_rects(self):
+        return self.input_rects + [self.output_rect]
 
     def paint(self, painter, option, widget=None):
         super().paint(painter, option, widget)
-
-        y_offset = 40
-        line_height = 20
-
-        for i in range(self.inputs):
-            y = y_offset + i * line_height
-            painter.setBrush(QBrush(QColor("#E0E0E0")))
-            painter.drawEllipse(QPointF(0, y + 5), 5, 5)
-            painter.drawText(QPointF(10, y + 10), f"X{i+1}")
-
-        output_dot_y = y_offset + (self.inputs - 1) * line_height
         painter.setBrush(QBrush(QColor("#E0E0E0")))
-        painter.drawEllipse(QPointF(self.width - 5, output_dot_y + 5), 5, 5)
+        painter.setPen(QPen(QColor("#E0E0E0")))
+
+        for i, rect in enumerate(self.input_rects):
+            painter.drawEllipse(rect.center(), 5, 5)
+            painter.drawText(QPointF(10, rect.center().y() + 5), f"X{i+1}")
+
+        painter.drawEllipse(self.output_rect.center(), 5, 5)
 
     def get_input_dot_rects(self):
         rects = []
-        y_offset = 40
-        line_height = 20
-        for i in range(self.inputs):
-            y = y_offset + i * line_height + 5
-            rects.append(QRectF(self.pos().x() - 5, self.pos().y() + y - 5, 10, 10))
+        for r in self.input_rects:
+            scene_pos = self.mapToScene(r.center())
+            rects.append(QRectF(scene_pos.x() - 5, scene_pos.y() - 5, 10, 10))
         return rects
 
     def get_output_dot_positions(self):
-        output_dot_y = 40 + (self.inputs - 1) * 20 + 5
-        return [self.mapToScene(QPointF(self.width - 5, output_dot_y))]
+        return [self.mapToScene(self.output_rect.center())]
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            output_dot_y = 40 + (self.inputs - 1) * 20 + 5
-            output_dot_rect = QRectF(self.width - 10, output_dot_y - 5, 10, 10)
-            if output_dot_rect.contains(event.pos()):
-                self.scene().start_connection_drag(self.mapToScene(event.pos()), self, 0)
+            if self.output_rect.contains(event.pos()):
+                pos = self.mapToScene(self.output_rect.center())
+                self.scene().start_connection_drag(pos, self, 0)
                 event.accept()
                 return
         super().mousePressEvent(event)
-
-    def get_state(self):
-        # Start with the base node's state
-        state = super().get_state()
-        # Add custom properties for this node
-        state['inputs'] = self.inputs
-        state['formula'] = self.formula_line_edit.text()
-        return state

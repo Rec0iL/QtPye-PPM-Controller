@@ -30,7 +30,6 @@ class MixerNode(BaseNode):
         layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(10)
 
-        # Create and align labels
         labels = {
             'out1': QLabel("Out 1"), 'out2': QLabel("Out 2"),
             'inA': QLabel("In A"), 'inB': QLabel("In B")
@@ -43,7 +42,6 @@ class MixerNode(BaseNode):
         layout.addWidget(labels['inA'], 1, 0)
         layout.addWidget(labels['inB'], 2, 0)
 
-        # Create and align line edits
         self.edit_A1 = QLineEdit(str(self.weights['A1']))
         self.edit_B1 = QLineEdit(str(self.weights['B1']))
         self.edit_A2 = QLineEdit(str(self.weights['A2']))
@@ -73,7 +71,6 @@ class MixerNode(BaseNode):
             self.weights['B2'] = int(self.edit_B2.text())
             self._recalculate_outputs()
         except ValueError:
-            # On invalid input, revert to saved value
             self.edit_A1.setText(str(self.weights['A1']))
             self.edit_B1.setText(str(self.weights['B1']))
             self.edit_A2.setText(str(self.weights['A2']))
@@ -87,13 +84,10 @@ class MixerNode(BaseNode):
     def _recalculate_outputs(self):
         in_a, in_b = self.input_values
         w = self.weights
-
         out_1 = (in_a * w['A1'] / 100.0) + (in_b * w['B1'] / 100.0)
         out_2 = (in_a * w['A2'] / 100.0) + (in_b * w['B2'] / 100.0)
-
         out_1 = max(-1.0, min(1.0, out_1))
         out_2 = max(-1.0, min(1.0, out_2))
-
         self.output_signals[0].output_signal.emit(out_1, 0)
         self.output_signals[1].output_signal.emit(out_2, 0)
         self.update()
@@ -102,8 +96,6 @@ class MixerNode(BaseNode):
         super().paint(painter, option, widget)
         painter.setPen(QPen(QColor("#E0E0E0")))
         painter.setBrush(QColor("#E0E0E0"))
-
-        # Draw input and output dots using the consistent Y positions
         painter.drawEllipse(self.input_rects[0].center(), 5, 5)
         painter.drawEllipse(self.input_rects[1].center(), 5, 5)
         painter.drawEllipse(QPointF(self.width, self.row_A_y), 5, 5)
@@ -120,12 +112,22 @@ class MixerNode(BaseNode):
         return [self.mapToScene(QPointF(self.width, self.row_A_y)),
                 self.mapToScene(QPointF(self.width, self.row_B_y))]
 
+    def get_hotspot_rects(self):
+        return self.input_rects + [
+            QRectF(self.width - 10, self.row_A_y - 5, 10, 10),
+            QRectF(self.width - 10, self.row_B_y - 5, 10, 10)
+        ]
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            output_dot_y_positions = [self.row_A_y, self.row_B_y]
-            for i, y in enumerate(output_dot_y_positions):
-                if QRectF(self.width - 10, y - 5, 10, 10).contains(event.pos()):
-                    self.scene().start_connection_drag(self.mapToScene(event.pos()), self, i)
+            output_hotspots = [
+                QRectF(self.width - 10, self.row_A_y - 5, 10, 10),
+                QRectF(self.width - 10, self.row_B_y - 5, 10, 10)
+            ]
+            for i, hotspot in enumerate(output_hotspots):
+                if hotspot.contains(event.pos()):
+                    pos = self.mapToScene(hotspot.center())
+                    self.scene().start_connection_drag(pos, self, i)
                     event.accept()
                     return
         super().mousePressEvent(event)
