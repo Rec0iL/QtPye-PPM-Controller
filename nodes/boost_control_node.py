@@ -129,33 +129,35 @@ class BoostControlNode(BaseNode):
         throttle_input_normalized = self.input_values[0]
         boost_button_state = self.input_values[1]
 
-        # Determine the PPM value of the throttle input alone
+        # Calculate the base value from the throttle input
         base_throttle_ppm = int(1500 + throttle_input_normalized * 500)
 
-        output_ppm = 0
+        # Initialize the output to the safe, non-boosted value by default
+        output_ppm = base_throttle_ppm
+
+        # Handle state transitions and value modifications
         if self.state == self.BOOST_STATE_READY:
             self.status_label.setText("Ready")
             self.status_label.setStyleSheet("font-weight: bold; color: green;")
-
-            output_ppm = base_throttle_ppm
-
             if boost_button_state > 0.5:
                 self._start_boost()
-                return # <-- ADD THIS LINE
+                return # Exit to prevent overwriting the boosted value
+
         elif self.state == self.BOOST_STATE_BOOSTING:
             self.status_label.setText("Boosting")
             self.status_label.setStyleSheet("font-weight: bold; color: orange;")
-
+            # Modify the output ONLY if boosting
             output_ppm = base_throttle_ppm + self.boost_amount_us
             if boost_button_state < 0.5:
                 self._end_boost()
-                return # <-- ADD THIS LINE
+                return # Exit to prevent overwriting the cooldown value
+
         elif self.state == self.BOOST_STATE_COOLDOWN:
             self.status_label.setText("Cooldown")
             self.status_label.setStyleSheet("font-weight: bold; color: red;")
+            # The output is already base_throttle_ppm, so no value change is needed.
 
-            output_ppm = base_throttle_ppm
-
+        # Clamp the final value and emit the signal
         output_ppm = max(1000, min(2000, output_ppm))
         self.output_value = (output_ppm - 1500) / 500.0
 
