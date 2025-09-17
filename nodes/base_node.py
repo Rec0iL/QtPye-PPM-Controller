@@ -84,3 +84,15 @@ class BaseNode(QGraphicsItem):
             self.setFlag(QGraphicsItem.ItemIsMovable, True)
             self.setCursor(Qt.ArrowCursor)
         super().hoverMoveEvent(event)
+
+    def hoverEnterEvent(self, event):
+        """When the mouse enters the node, highlight its connections."""
+        for conn in self.connections:
+            conn.set_highlighted(True)
+        super().hoverEnterEvent(event)
+
+    def hoverLeaveEvent(self, event):
+        """When the mouse leaves the node, un-highlight its connections."""
+        for conn in self.connections:
+            conn.set_highlighted(False)
+        super().hoverLeaveEvent(event)

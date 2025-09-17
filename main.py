@@ -1,6 +1,7 @@
 import sys
 import json
 import pygame
+from functools import partial
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QDockWidget, QTextEdit, QGraphicsView, QGraphicsScene,
                              QToolBar, QAction, QStatusBar, QDialog, QListWidget,
@@ -117,14 +118,25 @@ class PPMScene(QGraphicsScene):
     def remove_connection(self, conn):
         start_node = conn.start_node
         end_node = conn.end_node
+
+        print(f"Disconnected {start_node.title} output {conn.start_index} from {end_node.title} input {conn.end_index}")
+
+        # Remove the connection from both nodes' internal lists
         start_node.remove_connection(conn)
+        end_node.remove_connection(conn)
+
+        # Mark the input as free again
         end_node.set_input_occupied(conn.end_index, False)
 
+        # Disconnect the specific signal/slot pair
         if hasattr(conn, 'slot') and conn.slot is not None:
             try:
                 start_node.output_signals[conn.start_index].output_signal.disconnect(conn.slot)
             except TypeError:
+                # This can happen if the signal/slot is already gone, which is fine.
                 pass
+
+        # Remove the visual item from the scene and the scene's master list
         self.removeItem(conn)
         if conn in self.connections:
             self.connections.remove(conn)
@@ -199,10 +211,13 @@ class PPMScene(QGraphicsScene):
         self.addItem(new_connection)
         self.connections.append(new_connection)
         end_node.set_input_occupied(end_index, True)
+
         if start_index < len(start_node.output_signals):
-            slot = lambda value: end_node.set_value(value, end_index)
+            # Use functools.partial for a more robust connection
+            slot = partial(end_node.set_value, input_index=end_index)
             new_connection.slot = slot
             start_node.output_signals[start_index].output_signal.connect(slot)
+
             print(f"Connected {start_node.title} output {start_index} to {end_node.title} input {end_index}")
 
     def keyPressEvent(self, event):
@@ -518,28 +533,16 @@ class PPMApp(QMainWindow):
                 node_id = node_data["id"]
                 node = None
 
+                # Check if it's a default node that already exists
                 if title in node_map_by_title:
                     node = node_map_by_title[title]
-                    # Update state for default nodes (e.g., position)
-                    node.set_state(node_data)
+                    node.set_state(node_data) # Just update its state
                 else:
-                    # Create a new custom node
-                    node = None
+                    # It's a new node, so we need to create it
                     if node_type == "JoystickNode":
-                        guid = node_data.get('guid')
-                        name = node_data.get('name')
-                        node = None
-
-                        # Try to find a matching, connected joystick by GUID
-                        for i in range(pygame.joystick.get_count()):
-                            joy = pygame.joystick.Joystick(i)
-                            joy.init()
-                            if joy.get_guid() == guid:
-                                node = JoystickNode(i, node_data['x'], node_data['y'])
-                                print(f"Found and loaded matching joystick '{name}'")
-                                break
-                            if not node:
-                                print(f"Could not find matching joystick for saved node '{name}'")
+                        joystick_id = node_data.get('joystick_id', 0)
+                        if joystick_id < pygame.joystick.get_count():
+                            node = JoystickNode(joystick_id, node_data['x'], node_data['y'])
                     elif node_type == "CustomLogicNode":
                         num_inputs = node_data.get('inputs', 1)
                         node = CustomLogicNode(x=node_data['x'], y=node_data['y'], inputs=num_inputs)
@@ -560,20 +563,18 @@ class PPMApp(QMainWindow):
                     elif node_type == "PedalControlNode":
                         node = PedalControlNode(x=node_data['x'], y=node_data['y'])
 
-                    # After creating any new node, restore its full state
                     if node:
                         node.set_state(node_data)
+                        self.scene.addItem(node) # Add item ONLY when newly created
 
                 if node:
                     node.id = node_id # Assign the saved ID
-                    self.scene.addItem(node)
                     node_map_by_id[node.id] = node
 
             # --- Second Pass: Create all connections using unique IDs ---
             for conn_data in data["connections"]:
                 start_node_id = conn_data["start_node_id"]
                 end_node_id = conn_data["end_node_id"]
-
                 if start_node_id in node_map_by_id and end_node_id in node_map_by_id:
                     start_node = node_map_by_id[start_node_id]
                     end_node = node_map_by_id[end_node_id]

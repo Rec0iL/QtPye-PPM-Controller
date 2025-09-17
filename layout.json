@@ -90,16 +90,6 @@
             "name": "Logitech Extreme 3D"
         },
         {
-            "id": "a69741da-fa34-47dc-a273-3f2c4e03bf08",
-            "type": "JoystickNode",
-            "title": "Xbox One S Controller",
-            "x": 1329.0,
-            "y": 38.0,
-            "joystick_id": 1,
-            "guid": "050082795e040000200b000013050000",
-            "name": "Xbox One S Controller"
-        },
-        {
             "id": "a31bf72f-49e8-4d23-b9ce-90f799d60855",
             "type": "PPMChannelNode",
             "title": "PPM Channel 8",
@@ -169,6 +159,114 @@
             "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
             "start_node_output_index": 0,
             "end_node_id": "6eee3f49-5f7b-4e77-a32e-8c9224fc381c",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "c4a9f4c4-fafe-426c-bd51-07fcabaf925b",
+            "start_node_output_index": 0,
+            "end_node_id": "3d8d7cbe-1652-4235-a357-8b698d7a219f",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
+            "start_node_output_index": 1,
+            "end_node_id": "27e25f9c-4ae4-4341-a866-29e74521b275",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
+            "start_node_output_index": 2,
+            "end_node_id": "c4a9f4c4-fafe-426c-bd51-07fcabaf925b",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
+            "start_node_output_index": 3,
+            "end_node_id": "1f06d0d5-b44d-4eb0-8db0-bebe74713ab3",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
+            "start_node_output_index": 4,
+            "end_node_id": "64420824-05fc-44cb-bfd8-ef4e6e2362f7",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
+            "start_node_output_index": 5,
+            "end_node_id": "7aec76b6-a926-49b7-a452-6f5d502cfa98",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
+            "start_node_output_index": 6,
+            "end_node_id": "7aec76b6-a926-49b7-a452-6f5d502cfa98",
+            "end_node_input_index": 1
+        },
+        {
+            "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
+            "start_node_output_index": 7,
+            "end_node_id": "7aec76b6-a926-49b7-a452-6f5d502cfa98",
+            "end_node_input_index": 2
+        },
+        {
+            "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
+            "start_node_output_index": 8,
+            "end_node_id": "76fe6cea-11ac-4135-98aa-2c3b945de295",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
+            "start_node_output_index": 9,
+            "end_node_id": "76fe6cea-11ac-4135-98aa-2c3b945de295",
+            "end_node_input_index": 1
+        },
+        {
+            "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
+            "start_node_output_index": 10,
+            "end_node_id": "d08448b2-f360-49b1-a983-81168a6b5ba9",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
+            "start_node_output_index": 11,
+            "end_node_id": "d08448b2-f360-49b1-a983-81168a6b5ba9",
+            "end_node_input_index": 1
+        },
+        {
+            "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
+            "start_node_output_index": 12,
+            "end_node_id": "900f6b80-07d5-43ed-afb6-180931c69a93",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
+            "start_node_output_index": 13,
+            "end_node_id": "da3b1710-3041-4748-9ba1-299319c9ceee",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
+            "start_node_output_index": 14,
+            "end_node_id": "74377139-a2c5-4d73-90e1-d5034f3a4055",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
+            "start_node_output_index": 15,
+            "end_node_id": "5bba9ec7-0b7b-4ee0-b69e-353db57beb2c",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
+            "start_node_output_index": 16,
+            "end_node_id": "5bba9ec7-0b7b-4ee0-b69e-353db57beb2c",
+            "end_node_input_index": 1
+        },
+        {
+            "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
+            "start_node_output_index": 17,
+            "end_node_id": "6d83bcd0-3495-4b13-96b9-819eed698ebe",
             "end_node_input_index": 0
         }
     ]
