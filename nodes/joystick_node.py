@@ -6,13 +6,14 @@ from .base_node import BaseNode, NodeSignalEmitter
 
 class JoystickNode(BaseNode):
     def __init__(self, joystick_id, x=0, y=0, parent=None):
-        pygame.joystick.init()
-        if joystick_id >= pygame.joystick.get_count():
-            raise ValueError("Joystick ID out of range")
-
-        self.joystick_id = joystick_id
         self.joystick = pygame.joystick.Joystick(joystick_id)
         self.joystick.init()
+
+        self.joystick_id = joystick_id
+        self.instance_id = self.joystick.get_instance_id()
+        self.guid = self.joystick.get_guid()
+        self.name = self.joystick.get_name()
+        self.is_connected = True
 
         self.num_axes = self.joystick.get_numaxes()
         self.num_buttons = self.joystick.get_numbuttons()
@@ -23,7 +24,7 @@ class JoystickNode(BaseNode):
         h = 40 + (self.num_axes * item_height) + (self.num_buttons * item_height) + (self.num_hats * hat_height)
         w = 250
 
-        super().__init__(title=self.joystick.get_name(), x=x, y=y, w=w, h=h, parent=parent)
+        super().__init__(title=self.name, x=x, y=y, w=w, h=h, parent=parent)
 
         self.axis_values = [0.0] * self.num_axes
         self.button_values = [0] * self.num_buttons
@@ -40,7 +41,29 @@ class JoystickNode(BaseNode):
     def get_state(self):
         state = super().get_state()
         state['joystick_id'] = self.joystick_id
+        state['guid'] = self.guid # Save the GUID for reliable loading
+        state['name'] = self.name
         return state
+
+    def disconnect(self):
+        """Visually marks the node as disconnected and stops polling."""
+        self.is_connected = False
+        self.poll_timer.stop()
+        self.title = f"{self.name} (Disconnected)"
+        self.update()
+
+    def reconnect(self, new_joystick_id):
+        """Reconnects the node to a new joystick object."""
+        self.joystick_id = new_joystick_id
+        self.joystick = pygame.joystick.Joystick(new_joystick_id)
+        self.joystick.init()
+        self.instance_id = self.joystick.get_instance_id()
+
+        self.is_connected = True
+        self.poll_timer.start()
+        self.title = self.name # Restore original title
+        self.update()
+        print(f"Reconnected '{self.name}' on ID {self.joystick_id}")
 
     def update_joystick_state(self):
         pygame.event.pump()
@@ -123,6 +146,12 @@ class JoystickNode(BaseNode):
         self._paint_axes(painter)
         self._paint_buttons(painter)
         self._paint_hats(painter)
+
+        # If disconnected, draw a semi-transparent red overlay
+        if not self.is_connected:
+            painter.setBrush(QColor(255, 0, 0, 100))
+            painter.setPen(Qt.NoPen)
+            painter.drawRoundedRect(self.rect, 10, 10)
 
     def _paint_axes(self, painter):
         for i in range(self.num_axes):

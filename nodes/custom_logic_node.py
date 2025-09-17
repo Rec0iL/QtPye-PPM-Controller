@@ -53,6 +53,12 @@ class CustomLogicNode(BaseNode):
         state['formula'] = self.formula_line_edit.text()
         return state
 
+    def set_state(self, data):
+        """Restores node state from a dictionary."""
+        super().set_state(data)
+        if 'formula' in data:
+            self.formula_line_edit.setText(data.get('formula', ''))
+
     def set_value(self, value, input_index=0):
         if input_index < len(self.input_values):
             self.input_values[input_index] = value

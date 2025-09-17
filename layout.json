@@ -1,279 +1,174 @@
 {
     "nodes": [
         {
-            "id": "1f23d406-9a8b-4cae-954e-7f77ca9d14dc",
+            "id": "da3b1710-3041-4748-9ba1-299319c9ceee",
+            "type": "CustomLogicNode",
+            "title": "Custom Logic",
+            "x": 486.0,
+            "y": 538.0,
+            "inputs": 1,
+            "formula": "Y = X1*6"
+        },
+        {
+            "id": "76fe6cea-11ac-4135-98aa-2c3b945de295",
+            "type": "CustomLogicNode",
+            "title": "Custom Logic",
+            "x": 952.0,
+            "y": 732.0,
+            "inputs": 2,
+            "formula": "Y = X1*2 + X2*6"
+        },
+        {
+            "id": "2a74fe9c-33cd-45c7-9a22-c7ac0c690a2f",
             "type": "PedalControlNode",
             "title": "Pedal Control",
-            "x": 1015.0,
-            "y": 25.0,
-            "throttle_limit": 100,
-            "brake_limit": 100,
+            "x": 1664.0,
+            "y": 167.0,
+            "throttle_limit": 30,
+            "brake_limit": 20,
             "brake_deadzone": 5,
             "center_us": 1500
         },
         {
-            "id": "159a2d8f-975d-49ed-b092-b8a68ac0b606",
-            "type": "AxisToButtonsNode",
-            "title": "Axis to Buttons",
-            "x": 1055.0,
-            "y": 573.0,
-            "deadzone": 0.25
+            "id": "900f6b80-07d5-43ed-afb6-180931c69a93",
+            "type": "ToggleNode",
+            "title": "Toggle Switch",
+            "x": 256.0,
+            "y": 591.0
         },
         {
-            "id": "0adf28e5-a59c-40a2-a836-ada5df6ff029",
+            "id": "5bba9ec7-0b7b-4ee0-b69e-353db57beb2c",
+            "type": "ThreePositionSwitchNode",
+            "title": "3-Position Switch",
+            "x": 409.0,
+            "y": 765.0
+        },
+        {
+            "id": "74377139-a2c5-4d73-90e1-d5034f3a4055",
+            "type": "AxisToButtonsNode",
+            "title": "Axis to Buttons",
+            "x": 95.0,
+            "y": 751.0,
+            "deadzone": 0.3
+        },
+        {
+            "id": "c4a9f4c4-fafe-426c-bd51-07fcabaf925b",
+            "type": "ExpoCurveNode",
+            "title": "Expo Curve",
+            "x": 444.0,
+            "y": 308.0,
+            "expo_amount": 0.6
+        },
+        {
+            "id": "d08448b2-f360-49b1-a983-81168a6b5ba9",
             "type": "MixerNode",
             "title": "Mixer",
-            "x": 371.7500000000002,
-            "y": 884.0625000000001,
+            "x": 1028.0,
+            "y": 204.0,
             "weights": {
-                "A1": 100,
-                "B1": 0,
-                "A2": 0,
-                "B2": 100
+                "A1": 20,
+                "B1": 30,
+                "A2": -20,
+                "B2": -30
             }
         },
         {
-            "id": "cf15c94c-d52e-471e-b973-5edfdd111690",
-            "type": "ExpoCurveNode",
-            "title": "Expo Curve",
-            "x": 1369.0,
-            "y": 271.0
-        },
-        {
-            "id": "dfb05774-2f69-41cc-9992-e1f5fcc37431",
-            "type": "ThreePositionSwitchNode",
-            "title": "3-Position Switch",
-            "x": 1286.0,
-            "y": 81.0
-        },
-        {
-            "id": "7a978c56-f35a-4a15-a9ae-504cfabee8a2",
-            "type": "ToggleNode",
-            "title": "Toggle Switch",
-            "x": 578.0,
-            "y": 719.0
-        },
-        {
-            "id": "93f9ccd1-48ac-446a-bd0d-366b83eb0e86",
-            "type": "CustomLogicNode",
-            "title": "Custom Logic",
-            "x": 365.0,
-            "y": 516.0,
-            "inputs": 2,
-            "formula": "Y = X1 + X2"
-        },
-        {
-            "id": "63e086e5-c76a-4d5a-8568-b0ea6f7a6c8d",
-            "type": "CustomLogicNode",
-            "title": "Custom Logic",
-            "x": 87.0,
-            "y": 517.0,
-            "inputs": 1,
-            "formula": "Y = X1"
-        },
-        {
-            "id": "3d3cdfe2-e6da-4143-a4c1-7a2f514ecd29",
-            "type": "AxisToButtonsNode",
-            "title": "Axis to Buttons",
-            "x": 443.0,
-            "y": 37.0,
-            "deadzone": 0.25
-        },
-        {
-            "id": "46c9bc7f-a58f-44e4-bfe0-a1117462de71",
-            "type": "ThreePositionSwitchNode",
-            "title": "3-Position Switch",
-            "x": 467.0,
-            "y": 362.0
-        },
-        {
-            "id": "5502bcef-eea1-4324-8fa4-dc2b7d6ac873",
-            "type": "JoystickNode",
-            "title": "Logitech Extreme 3D",
-            "x": 52.0,
-            "y": 52.0,
-            "joystick_id": 0
-        },
-        {
-            "id": "77f23f1a-da52-418f-a592-339909dfaf0f",
-            "type": "AxisToButtonsNode",
-            "title": "Axis to Buttons",
-            "x": 439.0,
-            "y": 194.0,
-            "deadzone": 0.25
-        },
-        {
-            "id": "6dd58764-9de9-48d9-8c8b-540975f515d0",
-            "type": "BoostControlNode",
-            "title": "Boost Control",
-            "x": 1070.0,
-            "y": 302.0
-        },
-        {
-            "id": "110f6d1f-ac63-4d61-b391-71609923205b",
+            "id": "7aec76b6-a926-49b7-a452-6f5d502cfa98",
             "type": "SwitchGateNode",
             "title": "Switch Gate",
-            "x": 792.75,
-            "y": 983.25
+            "x": 1053.0,
+            "y": 516.0
         },
         {
-            "id": "db015312-ac2f-4ba6-8d3b-ffdc5be17dd1",
+            "id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
+            "type": "JoystickNode",
+            "title": "Logitech Extreme 3D",
+            "x": 49.0,
+            "y": 56.0,
+            "joystick_id": 0,
+            "guid": "0300eb976d04000015c2000010010000",
+            "name": "Logitech Extreme 3D"
+        },
+        {
+            "id": "a69741da-fa34-47dc-a273-3f2c4e03bf08",
+            "type": "JoystickNode",
+            "title": "Xbox One S Controller",
+            "x": 1329.0,
+            "y": 38.0,
+            "joystick_id": 1,
+            "guid": "050082795e040000200b000013050000",
+            "name": "Xbox One S Controller"
+        },
+        {
+            "id": "a31bf72f-49e8-4d23-b9ce-90f799d60855",
             "type": "PPMChannelNode",
             "title": "PPM Channel 8",
-            "x": 1158.0,
-            "y": 951.0
+            "x": 1404.0,
+            "y": 665.0,
+            "inverted": false
         },
         {
-            "id": "6be0d021-ae94-40a1-827e-505052384d8a",
+            "id": "e5599f4b-fa6c-410a-a371-03e4a6498df8",
             "type": "PPMChannelNode",
             "title": "PPM Channel 7",
             "x": 800.0,
-            "y": 710.0
+            "y": 710.0,
+            "inverted": false
         },
         {
-            "id": "90712b36-59bf-4e5a-9178-89179c49589a",
+            "id": "6d83bcd0-3495-4b13-96b9-819eed698ebe",
             "type": "PPMChannelNode",
             "title": "PPM Channel 6",
             "x": 800.0,
-            "y": 600.0
+            "y": 600.0,
+            "inverted": false
         },
         {
-            "id": "ced61497-08c0-4449-ae65-83ddff5c849e",
+            "id": "3d8d7cbe-1652-4235-a357-8b698d7a219f",
             "type": "PPMChannelNode",
             "title": "PPM Channel 5",
             "x": 800.0,
-            "y": 490.0
+            "y": 490.0,
+            "inverted": false
         },
         {
-            "id": "cd79e660-72a7-460d-814a-b7ed45b33d3d",
+            "id": "64420824-05fc-44cb-bfd8-ef4e6e2362f7",
             "type": "PPMChannelNode",
             "title": "PPM Channel 4",
             "x": 800.0,
-            "y": 380.0
+            "y": 380.0,
+            "inverted": false
         },
         {
-            "id": "84e641f3-3a82-47a4-a595-0c6dfeaa7da3",
+            "id": "1f06d0d5-b44d-4eb0-8db0-bebe74713ab3",
             "type": "PPMChannelNode",
             "title": "PPM Channel 3",
             "x": 800.0,
-            "y": 270.0
+            "y": 270.0,
+            "inverted": false
         },
         {
-            "id": "69ed0df6-4c09-4f55-8b2d-8f58c95c6bda",
+            "id": "27e25f9c-4ae4-4341-a866-29e74521b275",
             "type": "PPMChannelNode",
             "title": "PPM Channel 2",
             "x": 800.0,
-            "y": 160.0
+            "y": 160.0,
+            "inverted": false
         },
         {
-            "id": "9382e5d4-049b-48cd-af1a-ae76bba69560",
+            "id": "6eee3f49-5f7b-4e77-a32e-8c9224fc381c",
             "type": "PPMChannelNode",
             "title": "PPM Channel 1",
             "x": 800.0,
-            "y": 50.0
+            "y": 50.0,
+            "inverted": true
         }
     ],
     "connections": [
         {
-            "start_node_id": "77f23f1a-da52-418f-a592-339909dfaf0f",
+            "start_node_id": "6eec8bb3-3aae-43ad-b200-3942c8ce5536",
             "start_node_output_index": 0,
-            "end_node_id": "9382e5d4-049b-48cd-af1a-ae76bba69560",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_id": "77f23f1a-da52-418f-a592-339909dfaf0f",
-            "start_node_output_index": 1,
-            "end_node_id": "69ed0df6-4c09-4f55-8b2d-8f58c95c6bda",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_id": "5502bcef-eea1-4324-8fa4-dc2b7d6ac873",
-            "start_node_output_index": 3,
-            "end_node_id": "77f23f1a-da52-418f-a592-339909dfaf0f",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_id": "3d3cdfe2-e6da-4143-a4c1-7a2f514ecd29",
-            "start_node_output_index": 0,
-            "end_node_id": "46c9bc7f-a58f-44e4-bfe0-a1117462de71",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_id": "3d3cdfe2-e6da-4143-a4c1-7a2f514ecd29",
-            "start_node_output_index": 1,
-            "end_node_id": "46c9bc7f-a58f-44e4-bfe0-a1117462de71",
-            "end_node_input_index": 1
-        },
-        {
-            "start_node_id": "46c9bc7f-a58f-44e4-bfe0-a1117462de71",
-            "start_node_output_index": 0,
-            "end_node_id": "ced61497-08c0-4449-ae65-83ddff5c849e",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_id": "63e086e5-c76a-4d5a-8568-b0ea6f7a6c8d",
-            "start_node_output_index": 0,
-            "end_node_id": "93f9ccd1-48ac-446a-bd0d-366b83eb0e86",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_id": "5502bcef-eea1-4324-8fa4-dc2b7d6ac873",
-            "start_node_output_index": 15,
-            "end_node_id": "93f9ccd1-48ac-446a-bd0d-366b83eb0e86",
-            "end_node_input_index": 1
-        },
-        {
-            "start_node_id": "93f9ccd1-48ac-446a-bd0d-366b83eb0e86",
-            "start_node_output_index": 0,
-            "end_node_id": "90712b36-59bf-4e5a-9178-89179c49589a",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_id": "6dd58764-9de9-48d9-8c8b-540975f515d0",
-            "start_node_output_index": 0,
-            "end_node_id": "84e641f3-3a82-47a4-a595-0c6dfeaa7da3",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_id": "5502bcef-eea1-4324-8fa4-dc2b7d6ac873",
-            "start_node_output_index": 4,
-            "end_node_id": "6dd58764-9de9-48d9-8c8b-540975f515d0",
-            "end_node_input_index": 1
-        },
-        {
-            "start_node_id": "5502bcef-eea1-4324-8fa4-dc2b7d6ac873",
-            "start_node_output_index": 3,
-            "end_node_id": "6dd58764-9de9-48d9-8c8b-540975f515d0",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_id": "0adf28e5-a59c-40a2-a836-ada5df6ff029",
-            "start_node_output_index": 0,
-            "end_node_id": "110f6d1f-ac63-4d61-b391-71609923205b",
-            "end_node_input_index": 1
-        },
-        {
-            "start_node_id": "5502bcef-eea1-4324-8fa4-dc2b7d6ac873",
-            "start_node_output_index": 3,
-            "end_node_id": "110f6d1f-ac63-4d61-b391-71609923205b",
-            "end_node_input_index": 2
-        },
-        {
-            "start_node_id": "5502bcef-eea1-4324-8fa4-dc2b7d6ac873",
-            "start_node_output_index": 5,
-            "end_node_id": "7a978c56-f35a-4a15-a9ae-504cfabee8a2",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_id": "7a978c56-f35a-4a15-a9ae-504cfabee8a2",
-            "start_node_output_index": 0,
-            "end_node_id": "110f6d1f-ac63-4d61-b391-71609923205b",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_id": "110f6d1f-ac63-4d61-b391-71609923205b",
-            "start_node_output_index": 0,
-            "end_node_id": "db015312-ac2f-4ba6-8d3b-ffdc5be17dd1",
+            "end_node_id": "6eee3f49-5f7b-4e77-a32e-8c9224fc381c",
             "end_node_input_index": 0
         }
     ]

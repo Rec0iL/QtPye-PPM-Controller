@@ -125,3 +125,18 @@ class ExpoCurveNode(BaseNode):
                 event.accept()
                 return
         super().mousePressEvent(event)
+
+    def get_state(self):
+        """Returns a dictionary of data to be saved."""
+        state = super().get_state()
+        state['expo_amount'] = self.expo_amount
+        return state
+
+    def set_state(self, data):
+        """Restores node state from a dictionary."""
+        super().set_state(data)
+        if 'expo_amount' in data:
+            self.expo_amount = data['expo_amount']
+            # Update the UI to match the loaded state
+            self.expo_edit.setText(str(int(self.expo_amount * 100)))
+            self.visualizer.update()

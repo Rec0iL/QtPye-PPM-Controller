@@ -90,3 +90,18 @@ class PPMChannelNode(BaseNode):
         command = f"{self.channel_number}={ppm_value}"
         if self.serial_manager:
             self.serial_manager.send_command(command)
+
+    def get_state(self):
+        """Returns a dictionary of data to be saved."""
+        state = super().get_state()
+        state['inverted'] = self.inverted
+        return state
+
+    def set_state(self, data):
+        """Restores node state from a dictionary."""
+        super().set_state(data)
+        if 'inverted' in data:
+            is_inverted = data.get('inverted', False)
+            self.inverted = is_inverted
+            # Trigger a repaint to ensure the manually drawn checkbox shows the correct state
+            self.update()

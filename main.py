@@ -28,6 +28,10 @@ class PortSelectionDialog(QDialog):
         select_button.clicked.connect(self.accept)
         layout.addWidget(select_button)
         self.selected_port = None
+        self.joystick_check_timer = QTimer(self)
+        self.joystick_check_timer.setInterval(1000) # Check every second
+        self.joystick_check_timer.timeout.connect(self._check_joystick_events)
+        self.joystick_check_timer.start()
 
     def accept(self):
         selected_items = self.port_list_widget.selectedItems()
@@ -223,7 +227,10 @@ class PPMApp(QMainWindow):
         pygame.init()
         pygame.joystick.init()
         print(f"Detected {pygame.joystick.get_count()} joysticks.")
-
+        self.joystick_check_timer = QTimer(self)
+        self.joystick_check_timer.setInterval(1000) # Check every second
+        self.joystick_check_timer.timeout.connect(self._check_joystick_events)
+        self.joystick_check_timer.start()
         self.serial_manager = SerialManager()
         self.serial_manager.connection_status_changed.connect(self.update_status)
         self.serial_manager.log_message.connect(self.append_log)
@@ -442,6 +449,35 @@ class PPMApp(QMainWindow):
     def toggle_raw_mode(self, state):
         self.serial_manager.is_raw_mode = (state == Qt.Checked)
 
+    def _check_joystick_events(self):
+        pygame.event.pump()
+        scene_joysticks = [item for item in self.scene.items() if isinstance(item, JoystickNode)]
+
+        for event in pygame.event.get():
+            if event.type == pygame.JOYDEVICEADDED:
+                pygame.joystick.init() # Re-initialize to recognize the new device
+                new_joy = pygame.joystick.Joystick(event.device_index)
+                new_joy.init()
+
+                # Check if a disconnected node matches the new device's GUID
+                reconnected = False
+                for node in scene_joysticks:
+                    if not node.is_connected and node.guid == new_joy.get_guid():
+                        node.reconnect(event.device_index)
+                        reconnected = True
+                        break
+
+                if not reconnected:
+                    print(f"New, unassigned joystick added: {new_joy.get_name()}")
+                    # Optionally, you could automatically add a new node here
+
+            if event.type == pygame.JOYDEVICEREMOVED:
+                for node in scene_joysticks:
+                    if node.instance_id == event.instance_id:
+                        node.disconnect()
+                        print(f"Disconnected '{node.name}'")
+                        break
+
     def save_layout(self):
         nodes = []
         for item in self.scene.items():
@@ -490,9 +526,20 @@ class PPMApp(QMainWindow):
                     # Create a new custom node
                     node = None
                     if node_type == "JoystickNode":
-                        joystick_id = node_data.get('joystick_id', 0)
-                        if joystick_id < pygame.joystick.get_count():
-                            node = JoystickNode(joystick_id, node_data['x'], node_data['y'])
+                        guid = node_data.get('guid')
+                        name = node_data.get('name')
+                        node = None
+
+                        # Try to find a matching, connected joystick by GUID
+                        for i in range(pygame.joystick.get_count()):
+                            joy = pygame.joystick.Joystick(i)
+                            joy.init()
+                            if joy.get_guid() == guid:
+                                node = JoystickNode(i, node_data['x'], node_data['y'])
+                                print(f"Found and loaded matching joystick '{name}'")
+                                break
+                            if not node:
+                                print(f"Could not find matching joystick for saved node '{name}'")
                     elif node_type == "CustomLogicNode":
                         num_inputs = node_data.get('inputs', 1)
                         node = CustomLogicNode(x=node_data['x'], y=node_data['y'], inputs=num_inputs)
