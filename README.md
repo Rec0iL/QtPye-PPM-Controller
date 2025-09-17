@@ -26,13 +26,11 @@ It's ideal for controlling FPV drones, RC cars, and other robotics projects from
 
 ## Requirements
 
-* Python 3.x
-* A USB Joystick
-* A USB-to-PPM hardware adapter (e.g., PiKoder USB2PPM)
-* The following Python libraries:
-    * PyQt5
-    * Pygame
-    * Pyserial
+* **A Computer or Single-Board Computer:** The application runs on **Windows** or **Linux** PCs. It is also compatible with single-board computers like the **Raspberry Pi 3, 4, or 5**, as well as the **Orange Pi** series.
+* **Python 3.x:** A working Python 3 installation is required.
+* **A USB Input Device:** Any device recognized as a game controller, such as a **gamepad, joystick, steering wheel, or flight stick**.
+* **A USB-to-PPM Hardware Adapter:** A device to convert the signal, such as the **PiKoder USB2PPM**.
+* **Python Libraries:** The following must be installed: **PyQt5, Pygame, and Pyserial**.
 
 ---
 
