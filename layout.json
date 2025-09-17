@@ -1,17 +1,49 @@
 {
     "nodes": [
         {
-            "id": "329aab17-0b61-42f1-9d1c-1ebae269fd77",
-            "type": "JoystickNode",
-            "title": "Xbox One S Controller",
-            "x": 1157.4999999999998,
-            "y": 361.24999999999994,
-            "joystick_id": 1,
-            "guid": "050082795e040000200b000013050000",
-            "name": "Xbox One S Controller",
-            "num_axes": 6,
-            "num_buttons": 16,
-            "num_hats": 1
+            "id": "2b803054-fd8a-4296-85bc-a1323c715a79",
+            "type": "CustomLogicNode",
+            "title": "Custom Logic",
+            "x": 1716.0,
+            "y": 602.0,
+            "inputs": 2,
+            "formula": "Y = X1 + X2"
+        },
+        {
+            "id": "9e3df95a-9834-441e-812d-ae3cba03e128",
+            "type": "BoostControlNode",
+            "title": "Boost Control",
+            "x": 2007.0,
+            "y": 444.0
+        },
+        {
+            "id": "0f19f368-c5c0-4f55-a267-7691954ef87c",
+            "type": "CustomLogicNode",
+            "title": "Custom Logic",
+            "x": 1455.6875000000002,
+            "y": 26.125000000000014,
+            "inputs": 2,
+            "formula": "Y = X1 + X2"
+        },
+        {
+            "id": "35951d1b-8e1b-4a68-a3bf-a83c295e991f",
+            "type": "PedalControlNode",
+            "title": "Pedal Control",
+            "x": 1451.0,
+            "y": 339.0,
+            "throttle_limit": 40,
+            "brake_limit": 30,
+            "brake_deadzone": 5,
+            "center_us": 1500
+        },
+        {
+            "id": "e24b8653-c02e-4489-ba95-edcbad2ddc39",
+            "type": "CustomLogicNode",
+            "title": "Custom Logic",
+            "x": 1720.0,
+            "y": 390.0,
+            "inputs": 2,
+            "formula": "Y = X1 + X2"
         },
         {
             "id": "de3189ec-d6e7-4496-941f-a719ac86072b",
@@ -24,6 +56,19 @@
             "name": "Logitech Extreme 3D",
             "num_axes": 4,
             "num_buttons": 12,
+            "num_hats": 1
+        },
+        {
+            "id": "329aab17-0b61-42f1-9d1c-1ebae269fd77",
+            "type": "JoystickNode",
+            "title": "Xbox One S Controller",
+            "x": 1061.2499999999998,
+            "y": 407.49999999999994,
+            "joystick_id": 1,
+            "guid": "050082795e040000200b000013050000",
+            "name": "Xbox One S Controller",
+            "num_axes": 6,
+            "num_buttons": 16,
             "num_hats": 1
         },
         {
@@ -78,18 +123,91 @@
             "id": "17ce56b3-95ca-4a62-a4ec-3990ff6788e7",
             "type": "PPMChannelNode",
             "title": "PPM Channel 2",
-            "x": 800.0,
-            "y": 200.0,
+            "x": 1918.7499999999998,
+            "y": 65.62500000000001,
             "inverted": false
         },
         {
             "id": "5ee47bc2-0dbb-4bac-ac2b-d3521956bfab",
             "type": "PPMChannelNode",
             "title": "PPM Channel 1",
-            "x": 800.0,
-            "y": 50.0,
+            "x": 2268.75,
+            "y": 555.75,
             "inverted": false
         }
     ],
-    "connections": []
+    "connections": [
+        {
+            "start_node_id": "de3189ec-d6e7-4496-941f-a719ac86072b",
+            "start_node_output_index": 3,
+            "end_node_id": "e24b8653-c02e-4489-ba95-edcbad2ddc39",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "329aab17-0b61-42f1-9d1c-1ebae269fd77",
+            "start_node_output_index": 4,
+            "end_node_id": "35951d1b-8e1b-4a68-a3bf-a83c295e991f",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "329aab17-0b61-42f1-9d1c-1ebae269fd77",
+            "start_node_output_index": 5,
+            "end_node_id": "35951d1b-8e1b-4a68-a3bf-a83c295e991f",
+            "end_node_input_index": 1
+        },
+        {
+            "start_node_id": "35951d1b-8e1b-4a68-a3bf-a83c295e991f",
+            "start_node_output_index": 0,
+            "end_node_id": "e24b8653-c02e-4489-ba95-edcbad2ddc39",
+            "end_node_input_index": 1
+        },
+        {
+            "start_node_id": "329aab17-0b61-42f1-9d1c-1ebae269fd77",
+            "start_node_output_index": 0,
+            "end_node_id": "0f19f368-c5c0-4f55-a267-7691954ef87c",
+            "end_node_input_index": 1
+        },
+        {
+            "start_node_id": "de3189ec-d6e7-4496-941f-a719ac86072b",
+            "start_node_output_index": 0,
+            "end_node_id": "0f19f368-c5c0-4f55-a267-7691954ef87c",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "0f19f368-c5c0-4f55-a267-7691954ef87c",
+            "start_node_output_index": 0,
+            "end_node_id": "17ce56b3-95ca-4a62-a4ec-3990ff6788e7",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "e24b8653-c02e-4489-ba95-edcbad2ddc39",
+            "start_node_output_index": 0,
+            "end_node_id": "9e3df95a-9834-441e-812d-ae3cba03e128",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "2b803054-fd8a-4296-85bc-a1323c715a79",
+            "start_node_output_index": 0,
+            "end_node_id": "9e3df95a-9834-441e-812d-ae3cba03e128",
+            "end_node_input_index": 1
+        },
+        {
+            "start_node_id": "329aab17-0b61-42f1-9d1c-1ebae269fd77",
+            "start_node_output_index": 6,
+            "end_node_id": "2b803054-fd8a-4296-85bc-a1323c715a79",
+            "end_node_input_index": 1
+        },
+        {
+            "start_node_id": "de3189ec-d6e7-4496-941f-a719ac86072b",
+            "start_node_output_index": 4,
+            "end_node_id": "2b803054-fd8a-4296-85bc-a1323c715a79",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "9e3df95a-9834-441e-812d-ae3cba03e128",
+            "start_node_output_index": 0,
+            "end_node_id": "5ee47bc2-0dbb-4bac-ac2b-d3521956bfab",
+            "end_node_input_index": 0
+        }
+    ]
 }

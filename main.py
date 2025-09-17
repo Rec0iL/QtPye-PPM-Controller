@@ -171,6 +171,15 @@ class PPMScene(QGraphicsScene):
         super().mouseReleaseEvent(event)
 
     def create_connection(self, start_node, start_index, end_node, end_index=0):
+        if start_index >= len(start_node.output_signals):
+            print(f"Warning: Skipping connection from '{start_node.title}'. Output index {start_index} is out of range (device has {len(start_node.output_signals)} outputs).")
+            return
+
+        num_inputs = getattr(end_node, 'inputs', 0)
+        if end_index >= num_inputs:
+            print(f"Warning: Skipping connection to '{end_node.title}'. Input index {end_index} is out of range (node has {num_inputs} inputs).")
+            return
+
         new_connection = Connection(start_node, start_index, end_node, end_index)
         self.addItem(new_connection)
         self.connections.append(new_connection)
@@ -549,7 +558,14 @@ class PPMApp(QMainWindow):
                             break
                     if not node:
                         node = JoystickNode.create_disconnected(node_data)
+
+                # --- CORRECTED LOGIC FOR CUSTOM NODES ---
+                elif node_type == "CustomLogicNode":
+                    # Special case: read the 'inputs' value from the save file
+                    num_inputs = node_data.get('inputs', 1)
+                    node = CustomLogicNode(x=node_data['x'], y=node_data['y'], inputs=num_inputs)
                 else:
+                    # Generic case for all other simple nodes
                     node_class = globals().get(node_type)
                     if node_class:
                         node = node_class(x=node_data['x'], y=node_data['y'])
@@ -567,6 +583,7 @@ class PPMApp(QMainWindow):
                 if start_node_id in node_map_by_id and end_node_id in node_map_by_id:
                     start_node = node_map_by_id[start_node_id]
                     end_node = node_map_by_id[end_node_id]
+                    # The create_connection method from the previous fix will prevent crashes here
                     self.scene.create_connection(
                         start_node, conn_data["start_node_output_index"],
                         end_node, conn_data["end_node_input_index"]
