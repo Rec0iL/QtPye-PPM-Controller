@@ -105,6 +105,23 @@ class MixerNode(BaseNode):
     def get_output_dot_positions(self):
         return [self.mapToScene(r.center()) for r in self.output_rects]
 
+    def get_state(self):
+        """Returns a dictionary of data to be saved."""
+        state = super().get_state()
+        state['weights'] = self.weights
+        return state
+
+    def set_state(self, data):
+        """Restores node state from a dictionary."""
+        super().set_state(data)
+        if 'weights' in data:
+            self.weights = data['weights']
+            # Update the UI text boxes to match the loaded state
+            self.edit_A1.setText(str(self.weights.get('A1', 100)))
+            self.edit_B1.setText(str(self.weights.get('B1', 0)))
+            self.edit_A2.setText(str(self.weights.get('A2', 0)))
+            self.edit_B2.setText(str(self.weights.get('B2', 100)))
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             output_hotspots = [
