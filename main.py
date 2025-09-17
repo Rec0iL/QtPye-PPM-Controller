@@ -427,32 +427,38 @@ class PPMApp(QMainWindow):
         try:
             with open("layout.json", "r") as f:
                 data = json.load(f)
+
+            # --- Clear existing custom nodes and connections ---
             for item in list(self.scene.items()):
                 if isinstance(item, Connection):
                     self.remove_connection(item)
                 elif not isinstance(item, (JoystickNode, PPMChannelNode)):
                     self.scene.removeItem(item)
+
             node_map_by_title = {item.title: item for item in self.scene.items() if isinstance(item, BaseNode)}
             node_map_by_id = {}
+
+            # --- First Pass: Create/Reposition all nodes ---
             for node_data in data["nodes"]:
                 node_type = node_data["type"]
                 title = node_data["title"]
                 node_id = node_data["id"]
                 node = None
+
                 if title in node_map_by_title:
                     node = node_map_by_title[title]
-                    node.setPos(node_data['x'], node_data['y'])
+                    # Update state for default nodes (e.g., position)
+                    node.set_state(node_data)
                 else:
+                    # Create a new custom node
+                    node = None
                     if node_type == "JoystickNode":
                         joystick_id = node_data.get('joystick_id', 0)
                         if joystick_id < pygame.joystick.get_count():
                             node = JoystickNode(joystick_id, node_data['x'], node_data['y'])
-                        else:
-                            print(f"Could not create JoystickNode: ID {joystick_id} not connected.")
                     elif node_type == "CustomLogicNode":
                         num_inputs = node_data.get('inputs', 1)
                         node = CustomLogicNode(x=node_data['x'], y=node_data['y'], inputs=num_inputs)
-                        node.formula_line_edit.setText(node_data.get('formula', ''))
                     elif node_type == "BoostControlNode":
                         node = BoostControlNode(x=node_data['x'], y=node_data['y'])
                     elif node_type == "ToggleNode":
@@ -463,17 +469,25 @@ class PPMApp(QMainWindow):
                         node = ExpoCurveNode(x=node_data['x'], y=node_data['y'])
                     elif node_type == "MixerNode":
                         node = MixerNode(x=node_data['x'], y=node_data['y'])
-                    elif node_type == "AxisToButtonsNode": # Add this case
+                    elif node_type == "AxisToButtonsNode":
                         node = AxisToButtonsNode(x=node_data['x'], y=node_data['y'])
-                    elif node_type == "SwitchGateNode": # Add this case
+                    elif node_type == "SwitchGateNode":
                         node = SwitchGateNode(x=node_data['x'], y=node_data['y'])
+
+                    # After creating any new node, restore its full state
+                    if node:
+                        node.set_state(node_data)
+
                 if node:
-                    node.id = node_id
+                    node.id = node_id # Assign the saved ID
                     self.scene.addItem(node)
                     node_map_by_id[node.id] = node
+
+            # --- Second Pass: Create all connections using unique IDs ---
             for conn_data in data["connections"]:
                 start_node_id = conn_data["start_node_id"]
                 end_node_id = conn_data["end_node_id"]
+
                 if start_node_id in node_map_by_id and end_node_id in node_map_by_id:
                     start_node = node_map_by_id[start_node_id]
                     end_node = node_map_by_id[end_node_id]
@@ -481,6 +495,7 @@ class PPMApp(QMainWindow):
                         start_node, conn_data["start_node_output_index"],
                         end_node, conn_data["end_node_input_index"]
                     )
+
             print("Layout loaded.")
             self.append_log("Layout loaded from layout.json", False)
         except FileNotFoundError:
