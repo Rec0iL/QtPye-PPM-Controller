@@ -215,7 +215,7 @@ class PPMApp(QMainWindow):
 
         self.ppm_nodes = []
         for i in range(8):
-            node = PPMChannelNode(i + 1, 800, 50 + i * 110, serial_manager=self.serial_manager)
+            node = PPMChannelNode(i + 1, 800, 50 + i * 150, serial_manager=self.serial_manager)
             self.ppm_nodes.append(node)
             self.scene.addItem(node)
 
@@ -389,6 +389,26 @@ class PPMApp(QMainWindow):
         node = PedalControlNode(x=400, y=100)
         self.scene.addItem(node)
 
+    def center_view_on_nodes(self):
+        """Calculates the average position of all nodes and centers the view on it."""
+        nodes = [item for item in self.scene.items() if isinstance(item, BaseNode)]
+        if not nodes:
+            return
+
+        total_x = 0
+        total_y = 0
+        for node in nodes:
+            # Add half the node's width/height to find its center
+            total_x += node.pos().x() + node.width / 2
+            total_y += node.pos().y() + node.height / 2
+
+        avg_x = total_x / len(nodes)
+        avg_y = total_y / len(nodes)
+
+        # Center the view on the average point
+        self.view.centerOn(avg_x, avg_y)
+        print(f"View centered on ({avg_x:.0f}, {avg_y:.0f})")
+
     def auto_connect(self):
         default_port = "/dev/ttyACM0"
         available_ports = self.serial_manager.list_ports()
@@ -528,9 +548,8 @@ class PPMApp(QMainWindow):
                             node = JoystickNode(i, node_data['x'], node_data['y'])
                             break
                     if not node:
-                        # Corrected call: does not pass 'self' as a parent
                         node = JoystickNode.create_disconnected(node_data)
-                else: # All other custom logic nodes
+                else:
                     node_class = globals().get(node_type)
                     if node_class:
                         node = node_class(x=node_data['x'], y=node_data['y'])
@@ -561,6 +580,8 @@ class PPMApp(QMainWindow):
         except Exception as e:
             print(f"Error loading layout: {e}")
             self.append_log(f"Error loading layout: {e}", False)
+        finally:
+            self.center_view_on_nodes()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
