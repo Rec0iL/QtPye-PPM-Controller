@@ -15,61 +15,91 @@ class JoystickNode(BaseNode):
         self.name = self.joystick.get_name()
         self.is_connected = True
 
-        self.num_axes = self.joystick.get_numaxes()
-        self.num_buttons = self.joystick.get_numbuttons()
-        self.num_hats = self.joystick.get_numhats()
+        self._initialize_properties()
 
         item_height = 20
         hat_height = 40
         h = 40 + (self.num_axes * item_height) + (self.num_buttons * item_height) + (self.num_hats * hat_height)
-        w = 250
 
-        super().__init__(title=self.name, x=x, y=y, w=w, h=h, parent=parent)
+        super().__init__(title=self.name, x=x, y=y, w=250, h=h, parent=parent)
+        self._finish_init()
 
+    @classmethod
+    def create_disconnected(cls, node_data):
+        instance = cls.__new__(cls)
+        instance.is_connected = False
+        instance.joystick_id = -1
+        instance.instance_id = -1
+        instance.guid = node_data.get('guid', '')
+        instance.name = node_data.get('name', 'Unknown Joystick')
+
+        instance._initialize_properties(defaults=node_data)
+
+        item_height = 20
+        hat_height = 40
+        h = 40 + (instance.num_axes * item_height) + (instance.num_buttons * item_height) + (instance.num_hats * hat_height)
+
+        super(JoystickNode, instance).__init__(title=f"{instance.name} (Disconnected)", x=node_data['x'], y=node_data['y'], w=250, h=h)
+        instance._finish_init()
+        instance.poll_timer.stop()
+        return instance
+
+    def _initialize_properties(self, defaults=None):
+        if self.is_connected:
+            self.num_axes = self.joystick.get_numaxes()
+            self.num_buttons = self.joystick.get_numbuttons()
+            self.num_hats = self.joystick.get_numhats()
+        elif defaults:
+            self.num_axes = defaults.get('num_axes', 4)
+            self.num_buttons = defaults.get('num_buttons', 12)
+            self.num_hats = defaults.get('num_hats', 1)
+        else:
+            self.num_axes, self.num_buttons, self.num_hats = 0, 0, 0
+
+    def _finish_init(self):
         self.axis_values = [0.0] * self.num_axes
         self.button_values = [0] * self.num_buttons
         self.hat_values = [(0, 0)] * self.num_hats
-
         self.poll_timer = QTimer()
         self.poll_timer.setInterval(20)
         self.poll_timer.timeout.connect(self.update_joystick_state)
-        self.poll_timer.start()
-
+        if self.is_connected:
+            self.poll_timer.start()
         num_outputs = self.num_axes + self.num_buttons + (self.num_hats * 2)
         self.output_signals = [NodeSignalEmitter() for _ in range(num_outputs)]
 
-    def get_state(self):
-        state = super().get_state()
-        state['joystick_id'] = self.joystick_id
-        state['guid'] = self.guid # Save the GUID for reliable loading
-        state['name'] = self.name
-        return state
-
     def disconnect(self):
-        """Visually marks the node as disconnected and stops polling."""
         self.is_connected = False
         self.poll_timer.stop()
         self.title = f"{self.name} (Disconnected)"
         self.update()
 
     def reconnect(self, new_joystick_id):
-        """Reconnects the node to a new joystick object."""
-        self.joystick_id = new_joystick_id
         self.joystick = pygame.joystick.Joystick(new_joystick_id)
         self.joystick.init()
+        self.joystick_id = new_joystick_id
         self.instance_id = self.joystick.get_instance_id()
-
         self.is_connected = True
         self.poll_timer.start()
-        self.title = self.name # Restore original title
+        self.title = self.name
         self.update()
         print(f"Reconnected '{self.name}' on ID {self.joystick_id}")
 
+    def get_state(self):
+        state = super().get_state()
+        state['joystick_id'] = self.joystick_id
+        state['guid'] = self.guid
+        state['name'] = self.name
+        state['num_axes'] = self.num_axes
+        state['num_buttons'] = self.num_buttons
+        state['num_hats'] = self.num_hats
+        return state
+
     def update_joystick_state(self):
+        if not self.is_connected: return
         pygame.event.pump()
         needs_update = False
         output_index = 0
-
         for i in range(self.num_axes):
             new_value = self.joystick.get_axis(i)
             if abs(self.axis_values[i] - new_value) > 1e-9:
@@ -77,7 +107,6 @@ class JoystickNode(BaseNode):
                 self.output_signals[output_index].output_signal.emit(new_value, 0)
                 needs_update = True
             output_index += 1
-
         for i in range(self.num_buttons):
             new_value = float(self.joystick.get_button(i))
             if self.button_values[i] != new_value:
@@ -85,7 +114,6 @@ class JoystickNode(BaseNode):
                 self.output_signals[output_index].output_signal.emit(new_value, 0)
                 needs_update = True
             output_index += 1
-
         for i in range(self.num_hats):
             new_value = self.joystick.get_hat(i)
             if self.hat_values[i] != new_value:
@@ -94,7 +122,6 @@ class JoystickNode(BaseNode):
                 self.output_signals[output_index + 1].output_signal.emit(float(new_value[1]), 0)
                 needs_update = True
             output_index += 2
-
         if needs_update:
             self.update()
 
@@ -102,24 +129,20 @@ class JoystickNode(BaseNode):
         item_height = 20
         hat_height = 40
         y = 40
-
         if index < self.num_axes:
             return y + (index * item_height) + (item_height / 2)
         index -= self.num_axes
         y += self.num_axes * item_height
-
         if index < self.num_buttons:
             return y + (index * item_height) + (item_height / 2)
         index -= self.num_buttons
         y += self.num_buttons * item_height
-
         hat_index = index // 2
         is_y_output = index % 2
         y += hat_index * hat_height
         return y + (15 if not is_y_output else 30)
 
     def get_hotspot_rects(self):
-        """Returns all output dot hitboxes in local coordinates."""
         rects = []
         num_outputs = self.num_axes + self.num_buttons + (self.num_hats * 2)
         for i in range(num_outputs):
@@ -143,15 +166,13 @@ class JoystickNode(BaseNode):
 
     def paint(self, painter, option, widget=None):
         super().paint(painter, option, widget)
+        if not self.is_connected:
+            painter.setBrush(QColor(255, 0, 0, 80))
+            painter.setPen(Qt.NoPen)
+            painter.drawRoundedRect(self.rect, 10, 10)
         self._paint_axes(painter)
         self._paint_buttons(painter)
         self._paint_hats(painter)
-
-        # If disconnected, draw a semi-transparent red overlay
-        if not self.is_connected:
-            painter.setBrush(QColor(255, 0, 0, 100))
-            painter.setPen(Qt.NoPen)
-            painter.drawRoundedRect(self.rect, 10, 10)
 
     def _paint_axes(self, painter):
         for i in range(self.num_axes):

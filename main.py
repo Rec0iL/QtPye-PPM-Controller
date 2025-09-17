@@ -13,7 +13,8 @@ from PyQt5.QtGui import (QBrush, QColor, QPainterPath, QPainter,
 from serial_manager import SerialManager
 from nodes import (BaseNode, PPMChannelNode, JoystickNode, CustomLogicNode,
                    BoostControlNode, ToggleNode, ThreePositionSwitchNode,
-                   ExpoCurveNode, MixerNode, AxisToButtonsNode, SwitchGateNode, PedalControlNode)
+                   ExpoCurveNode, MixerNode, AxisToButtonsNode, SwitchGateNode,
+                   PedalControlNode)
 from connections import Connection
 
 class PortSelectionDialog(QDialog):
@@ -29,10 +30,6 @@ class PortSelectionDialog(QDialog):
         select_button.clicked.connect(self.accept)
         layout.addWidget(select_button)
         self.selected_port = None
-        self.joystick_check_timer = QTimer(self)
-        self.joystick_check_timer.setInterval(1000) # Check every second
-        self.joystick_check_timer.timeout.connect(self._check_joystick_events)
-        self.joystick_check_timer.start()
 
     def accept(self):
         selected_items = self.port_list_widget.selectedItems()
@@ -46,17 +43,12 @@ class ConnectionView(QGraphicsView):
         self.setRenderHint(QPainter.Antialiasing)
         self.setDragMode(self.NoDrag)
         self.setTransformationAnchor(self.AnchorUnderMouse)
-
         self.middle_mouse_button_pressed = False
         self.last_mouse_pos = QPointF()
 
     def wheelEvent(self, event):
         if event.modifiers() == Qt.ControlModifier:
-            zoom_in_factor = 1.25
-            zoom_out_factor = 1 / zoom_in_factor
-            zoom_factor = zoom_out_factor
-            if event.angleDelta().y() > 0:
-                zoom_factor = zoom_in_factor
+            zoom_factor = 1.25 if event.angleDelta().y() > 0 else 1 / 1.25
             self.scale(zoom_factor, zoom_factor)
         else:
             super().wheelEvent(event)
@@ -85,22 +77,15 @@ class ConnectionView(QGraphicsView):
 class PPMScene(QGraphicsScene):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setSceneRect(0, 0, 2000, 2000)
+        self.setSceneRect(0, 0, 4000, 4000)
         self.setBackgroundBrush(QBrush(QColor("#323232")))
-
-        # Connection dragging state
         self.temp_connection_line = None
         self.connection_start_node = None
         self.connection_start_index = -1
-
-        # New state for hovered connection target
         self.hovered_node = None
         self.hovered_index = -1
-
-        # Pens for different connection states
         self.pen_dragging = QPen(QColor("#00BFFF"), 2, Qt.DotLine)
         self.pen_hovering = QPen(QColor(0, 191, 255, 150), 3, Qt.SolidLine)
-
         self.connections = []
         self.update_timer = QTimer(self)
         self.update_timer.setInterval(50)
@@ -118,25 +103,15 @@ class PPMScene(QGraphicsScene):
     def remove_connection(self, conn):
         start_node = conn.start_node
         end_node = conn.end_node
-
         print(f"Disconnected {start_node.title} output {conn.start_index} from {end_node.title} input {conn.end_index}")
-
-        # Remove the connection from both nodes' internal lists
         start_node.remove_connection(conn)
         end_node.remove_connection(conn)
-
-        # Mark the input as free again
         end_node.set_input_occupied(conn.end_index, False)
-
-        # Disconnect the specific signal/slot pair
         if hasattr(conn, 'slot') and conn.slot is not None:
             try:
                 start_node.output_signals[conn.start_index].output_signal.disconnect(conn.slot)
             except TypeError:
-                # This can happen if the signal/slot is already gone, which is fine.
                 pass
-
-        # Remove the visual item from the scene and the scene's master list
         self.removeItem(conn)
         if conn in self.connections:
             self.connections.remove(conn)
@@ -153,12 +128,8 @@ class PPMScene(QGraphicsScene):
         if self.temp_connection_line:
             start_pos = self.connection_start_node.get_output_dot_positions()[self.connection_start_index]
             end_pos = event.scenePos()
-
-            # Reset hover state
             self.hovered_node = None
             self.hovered_index = -1
-
-            # Check for a valid connection target under the cursor
             items_under_cursor = self.items(event.scenePos())
             for item in items_under_cursor:
                 if hasattr(item, 'get_input_dot_rects'):
@@ -170,15 +141,11 @@ class PPMScene(QGraphicsScene):
                             break
                 if self.hovered_node:
                     break
-
             if self.hovered_node:
-                # Snap to the dot and show the "ghost" connection
                 self.temp_connection_line.setPen(self.pen_hovering)
                 end_pos = self.hovered_node.get_input_dot_rects()[self.hovered_index].center()
             else:
-                # No valid target, use the normal dragging line
                 self.temp_connection_line.setPen(self.pen_dragging)
-
             self.update_temp_line(start_pos, end_pos)
         super().mouseMoveEvent(event)
 
@@ -192,12 +159,9 @@ class PPMScene(QGraphicsScene):
 
     def mouseReleaseEvent(self, event):
         if self.temp_connection_line:
-            # If we were hovering over a valid target, create the connection
             if self.hovered_node:
                 self.create_connection(self.connection_start_node, self.connection_start_index,
                                        self.hovered_node, self.hovered_index)
-
-            # Cleanup
             self.removeItem(self.temp_connection_line)
             self.temp_connection_line = None
             self.connection_start_node = None
@@ -211,13 +175,10 @@ class PPMScene(QGraphicsScene):
         self.addItem(new_connection)
         self.connections.append(new_connection)
         end_node.set_input_occupied(end_index, True)
-
         if start_index < len(start_node.output_signals):
-            # Use functools.partial for a more robust connection
             slot = partial(end_node.set_value, input_index=end_index)
             new_connection.slot = slot
             start_node.output_signals[start_index].output_signal.connect(slot)
-
             print(f"Connected {start_node.title} output {start_index} to {end_node.title} input {end_index}")
 
     def keyPressEvent(self, event):
@@ -226,7 +187,7 @@ class PPMScene(QGraphicsScene):
             for item in selected_items:
                 if isinstance(item, (JoystickNode, CustomLogicNode, BoostControlNode, ToggleNode,
                                      ThreePositionSwitchNode, ExpoCurveNode, MixerNode,
-                                     AxisToButtonsNode, SwitchGateNode)):
+                                     AxisToButtonsNode, SwitchGateNode, PedalControlNode)):
                     for conn in list(item.connections):
                         self.remove_connection(conn)
                     self.removeItem(item)
@@ -242,10 +203,7 @@ class PPMApp(QMainWindow):
         pygame.init()
         pygame.joystick.init()
         print(f"Detected {pygame.joystick.get_count()} joysticks.")
-        self.joystick_check_timer = QTimer(self)
-        self.joystick_check_timer.setInterval(1000) # Check every second
-        self.joystick_check_timer.timeout.connect(self._check_joystick_events)
-        self.joystick_check_timer.start()
+
         self.serial_manager = SerialManager()
         self.serial_manager.connection_status_changed.connect(self.update_status)
         self.serial_manager.log_message.connect(self.append_log)
@@ -255,7 +213,6 @@ class PPMApp(QMainWindow):
         self.view = ConnectionView(self.scene)
         self.setCentralWidget(self.view)
 
-        # Default PPM nodes are still created
         self.ppm_nodes = []
         for i in range(8):
             node = PPMChannelNode(i + 1, 800, 50 + i * 110, serial_manager=self.serial_manager)
@@ -263,7 +220,6 @@ class PPMApp(QMainWindow):
             self.scene.addItem(node)
 
         self.serial_console = QDockWidget("Serial Console", self)
-        self.serial_console.setAllowedAreas(Qt.BottomDockWidgetArea | Qt.TopDockWidgetArea)
         console_widget = QWidget()
         console_layout = QVBoxLayout(console_widget)
         self.console_text = QTextEdit()
@@ -279,57 +235,40 @@ class PPMApp(QMainWindow):
         toolbar = QToolBar("Controls")
         self.addToolBar(toolbar)
 
-        # Build the "Add Node" menu, dynamically adding joystick options
-        add_node_menu = QMenu(self)
-        joystick_count = pygame.joystick.get_count()
-        if joystick_count > 0:
-            for i in range(joystick_count):
-                joystick = pygame.joystick.Joystick(i)
-                joystick.init()
-                action = QAction(f"Input: {joystick.get_name()} (ID {i})", self)
-                action.triggered.connect(lambda checked, jid=i: self.add_joystick_node(jid))
-                add_node_menu.addAction(action)
-            add_node_menu.addSeparator()
+        # 1. Create the menu
+        self.add_node_menu = QMenu(self)
 
-        add_single_input_node_action = QAction("1-Input Logic", self)
-        add_single_input_node_action.triggered.connect(lambda: self.add_custom_node(1))
-        add_node_menu.addAction(add_single_input_node_action)
-        add_two_input_node_action = QAction("2-Input Logic", self)
-        add_two_input_node_action.triggered.connect(lambda: self.add_custom_node(2))
-        add_node_menu.addAction(add_two_input_node_action)
-        add_boost_node_action = QAction("Boost Node", self)
-        add_boost_node_action.triggered.connect(self.add_boost_node)
-        add_node_menu.addAction(add_boost_node_action)
-        add_toggle_node_action = QAction("Toggle Switch", self)
-        add_toggle_node_action.triggered.connect(self.add_toggle_node)
-        add_node_menu.addAction(add_toggle_node_action)
-        add_3pos_switch_action = QAction("3-Position Switch", self)
-        add_3pos_switch_action.triggered.connect(self.add_three_position_switch_node)
-        add_node_menu.addAction(add_3pos_switch_action)
-        add_expo_node_action = QAction("Expo Curve", self)
-        add_expo_node_action.triggered.connect(self.add_expo_node)
-        add_node_menu.addAction(add_expo_node_action)
-        add_mixer_node_action = QAction("Mixer", self)
-        add_mixer_node_action.triggered.connect(self.add_mixer_node)
-        add_node_menu.addAction(add_mixer_node_action)
-        add_axis_to_buttons_action = QAction("Axis to Buttons", self)
-        add_axis_to_buttons_action.triggered.connect(self.add_axis_to_buttons_node)
-        add_node_menu.addAction(add_axis_to_buttons_action)
-        add_switch_gate_action = QAction("Switch Gate", self)
-        add_switch_gate_action.triggered.connect(self.add_switch_gate_node)
-        add_node_menu.addAction(add_switch_gate_action)
-        add_pedal_node_action = QAction("Pedal Control", self)
-        add_pedal_node_action.triggered.connect(self.add_pedal_control_node)
-        add_node_menu.addAction(add_pedal_node_action)
+        # 2. Add all the STATIC logic node actions
+        actions_to_add = {
+            "1-Input Logic": lambda: self.add_custom_node(1),
+            "2-Input Logic": lambda: self.add_custom_node(2),
+            "Boost Node": self.add_boost_node,
+            "Toggle Switch": self.add_toggle_node,
+            "3-Position Switch": self.add_three_position_switch_node,
+            "Expo Curve": self.add_expo_node,
+            "Mixer": self.add_mixer_node,
+            "Axis to Buttons": self.add_axis_to_buttons_node,
+            "Switch Gate": self.add_switch_gate_node,
+            "Pedal Control": self.add_pedal_control_node
+        }
+        for name, func in actions_to_add.items():
+            action = QAction(name, self)
+            action.triggered.connect(func)
+            self.add_node_menu.addAction(action)
 
+        # 3. NOW, call the function to insert the DYNAMIC joystick actions at the top
+        self._rebuild_joystick_menu()
+
+        # 4. Create the button and assign the now-complete menu to it
         add_node_button = QToolButton(self)
         add_node_button.setText("Add Node")
         add_node_button.setIcon(QIcon.fromTheme("list-add"))
-        add_node_button.setMenu(add_node_menu)
+        add_node_button.setMenu(self.add_node_menu)
         add_node_button.setPopupMode(QToolButton.InstantPopup)
         toolbar.addWidget(add_node_button)
         toolbar.addSeparator()
 
+        # ... (rest of toolbar setup)
         select_port_action = QAction(QIcon.fromTheme("folder-remote"), "Select Port", self)
         select_port_action.triggered.connect(self.show_port_selection)
         toolbar.addAction(select_port_action)
@@ -338,8 +277,8 @@ class PPMApp(QMainWindow):
         toolbar.addAction(self.connect_action)
         self.disconnect_action = QAction(QIcon.fromTheme("network-disconnect"), "Disconnect", self)
         self.disconnect_action.triggered.connect(self.serial_manager.disconnect)
-        toolbar.addAction(self.disconnect_action)
         self.disconnect_action.setEnabled(False)
+        toolbar.addAction(self.disconnect_action)
         self.load_action = QAction(QIcon.fromTheme("document-open"), "Load Layout", self)
         self.load_action.triggered.connect(self.load_layout)
         toolbar.addAction(self.load_action)
@@ -359,8 +298,53 @@ class PPMApp(QMainWindow):
         self.status_label = QLabel("Disconnected")
         self.statusBar().addWidget(self.status_label)
         self.max_log_blocks = 500
+
         self.load_layout()
         self.auto_connect()
+
+        self.joystick_check_timer = QTimer(self)
+        self.joystick_check_timer.setInterval(1000)
+        self.joystick_check_timer.timeout.connect(self._check_joystick_events)
+        self.joystick_check_timer.start()
+
+    def _rebuild_joystick_menu(self):
+        for action in self.add_node_menu.actions():
+            if action.text().startswith("Input:") or action.isSeparator():
+                self.add_node_menu.removeAction(action)
+
+        joystick_count = pygame.joystick.get_count()
+        if joystick_count > 0:
+            first_action = self.add_node_menu.actions()[0] if self.add_node_menu.actions() else None
+            for i in range(joystick_count):
+                joystick = pygame.joystick.Joystick(i)
+                joystick.init()
+                action = QAction(f"Input: {joystick.get_name()} (ID {i})", self)
+                action.triggered.connect(lambda checked, jid=i: self.add_joystick_node(jid))
+                self.add_node_menu.insertAction(first_action, action)
+            self.add_node_menu.insertSeparator(first_action)
+
+    def _check_joystick_events(self):
+        pygame.joystick.quit()
+        pygame.joystick.init()
+
+        connected_instance_ids = {pygame.joystick.Joystick(i).get_instance_id(): i for i in range(pygame.joystick.get_count())}
+        scene_joysticks = [item for item in self.scene.items() if isinstance(item, JoystickNode)]
+
+        # Check for newly added joysticks that aren't in the scene
+        live_guids = {pygame.joystick.Joystick(i).get_guid() for i in range(pygame.joystick.get_count())}
+        scene_guids = {node.guid for node in scene_joysticks}
+        if live_guids - scene_guids:
+            print("New joystick detected, rebuilding menu.")
+            self._rebuild_joystick_menu()
+
+        for node in scene_joysticks:
+            is_now_connected = node.instance_id in connected_instance_ids
+            if node.is_connected and not is_now_connected:
+                node.disconnect()
+                print(f"Disconnected '{node.name}' (Instance ID: {node.instance_id})")
+            elif not node.is_connected and is_now_connected:
+                new_joystick_id = connected_instance_ids[node.instance_id]
+                node.reconnect(new_joystick_id)
 
     def add_joystick_node(self, joystick_id):
         try:
@@ -471,6 +455,7 @@ class PPMApp(QMainWindow):
         for event in pygame.event.get():
             if event.type == pygame.JOYDEVICEADDED:
                 pygame.joystick.init() # Re-initialize to recognize the new device
+                self._rebuild_joystick_menu()
                 new_joy = pygame.joystick.Joystick(event.device_index)
                 new_joy.init()
 
@@ -516,65 +501,50 @@ class PPMApp(QMainWindow):
             with open("layout.json", "r") as f:
                 data = json.load(f)
 
-            # --- Clear existing custom nodes and connections ---
             for item in list(self.scene.items()):
                 if isinstance(item, Connection):
                     self.remove_connection(item)
-                elif not isinstance(item, (JoystickNode, PPMChannelNode)):
+                elif not isinstance(item, (PPMChannelNode)): # Keep PPM nodes
                     self.scene.removeItem(item)
 
-            node_map_by_title = {item.title: item for item in self.scene.items() if isinstance(item, BaseNode)}
+            node_map_by_title = {item.title: item for item in self.scene.items() if isinstance(item, PPMChannelNode)}
             node_map_by_id = {}
 
-            # --- First Pass: Create/Reposition all nodes ---
             for node_data in data["nodes"]:
-                node_type = node_data["type"]
-                title = node_data["title"]
-                node_id = node_data["id"]
+                node_type = node_data.get("type")
+                title = node_data.get("title")
+                node_id = node_data.get("id")
                 node = None
 
-                # Check if it's a default node that already exists
-                if title in node_map_by_title:
-                    node = node_map_by_title[title]
-                    node.set_state(node_data) # Just update its state
-                else:
-                    # It's a new node, so we need to create it
-                    if node_type == "JoystickNode":
-                        joystick_id = node_data.get('joystick_id', 0)
-                        if joystick_id < pygame.joystick.get_count():
-                            node = JoystickNode(joystick_id, node_data['x'], node_data['y'])
-                    elif node_type == "CustomLogicNode":
-                        num_inputs = node_data.get('inputs', 1)
-                        node = CustomLogicNode(x=node_data['x'], y=node_data['y'], inputs=num_inputs)
-                    elif node_type == "BoostControlNode":
-                        node = BoostControlNode(x=node_data['x'], y=node_data['y'])
-                    elif node_type == "ToggleNode":
-                        node = ToggleNode(x=node_data['x'], y=node_data['y'])
-                    elif node_type == "ThreePositionSwitchNode":
-                        node = ThreePositionSwitchNode(x=node_data['x'], y=node_data['y'])
-                    elif node_type == "ExpoCurveNode":
-                        node = ExpoCurveNode(x=node_data['x'], y=node_data['y'])
-                    elif node_type == "MixerNode":
-                        node = MixerNode(x=node_data['x'], y=node_data['y'])
-                    elif node_type == "AxisToButtonsNode":
-                        node = AxisToButtonsNode(x=node_data['x'], y=node_data['y'])
-                    elif node_type == "SwitchGateNode":
-                        node = SwitchGateNode(x=node_data['x'], y=node_data['y'])
-                    elif node_type == "PedalControlNode":
-                        node = PedalControlNode(x=node_data['x'], y=node_data['y'])
-
-                    if node:
-                        node.set_state(node_data)
-                        self.scene.addItem(node) # Add item ONLY when newly created
+                if node_type == "PPMChannelNode":
+                    node = node_map_by_title.get(title)
+                elif node_type == "JoystickNode":
+                    guid = node_data.get('guid')
+                    name = node_data.get('name')
+                    for i in range(pygame.joystick.get_count()):
+                        joy = pygame.joystick.Joystick(i)
+                        joy.init()
+                        if joy.get_guid() == guid:
+                            node = JoystickNode(i, node_data['x'], node_data['y'])
+                            break
+                    if not node:
+                        # Corrected call: does not pass 'self' as a parent
+                        node = JoystickNode.create_disconnected(node_data)
+                else: # All other custom logic nodes
+                    node_class = globals().get(node_type)
+                    if node_class:
+                        node = node_class(x=node_data['x'], y=node_data['y'])
 
                 if node:
-                    node.id = node_id # Assign the saved ID
+                    node.id = node_id
+                    node.set_state(node_data)
+                    if node not in self.scene.items():
+                        self.scene.addItem(node)
                     node_map_by_id[node.id] = node
 
-            # --- Second Pass: Create all connections using unique IDs ---
             for conn_data in data["connections"]:
-                start_node_id = conn_data["start_node_id"]
-                end_node_id = conn_data["end_node_id"]
+                start_node_id = conn_data.get("start_node_id")
+                end_node_id = conn_data.get("end_node_id")
                 if start_node_id in node_map_by_id and end_node_id in node_map_by_id:
                     start_node = node_map_by_id[start_node_id]
                     end_node = node_map_by_id[end_node_id]
