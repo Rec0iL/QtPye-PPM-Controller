@@ -9,7 +9,7 @@ class PPMChannelNode(BaseNode):
         super().__init__(title=f"PPM Channel {channel_number}", x=x, y=y, w=180, h=140, parent=parent)
         self.channel_number = channel_number
         self.serial_manager = serial_manager
-
+        self.inputs = 1
         self.inverted = False
         self.current_value = 0.0
         self.raw_input_value = 0.0
