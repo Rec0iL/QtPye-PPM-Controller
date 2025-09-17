@@ -12,7 +12,7 @@ from PyQt5.QtGui import (QBrush, QColor, QPainterPath, QPainter,
 from serial_manager import SerialManager
 from nodes import (BaseNode, PPMChannelNode, JoystickNode, CustomLogicNode,
                    BoostControlNode, ToggleNode, ThreePositionSwitchNode,
-                   ExpoCurveNode, MixerNode, AxisToButtonsNode, SwitchGateNode)
+                   ExpoCurveNode, MixerNode, AxisToButtonsNode, SwitchGateNode, PedalControlNode)
 from connections import Connection
 
 class PortSelectionDialog(QDialog):
@@ -82,11 +82,21 @@ class PPMScene(QGraphicsScene):
         super().__init__(parent)
         self.setSceneRect(0, 0, 2000, 2000)
         self.setBackgroundBrush(QBrush(QColor("#323232")))
+
+        # Connection dragging state
         self.temp_connection_line = None
         self.connection_start_node = None
         self.connection_start_index = -1
-        self.connections = []
 
+        # New state for hovered connection target
+        self.hovered_node = None
+        self.hovered_index = -1
+
+        # Pens for different connection states
+        self.pen_dragging = QPen(QColor("#00BFFF"), 2, Qt.DotLine)
+        self.pen_hovering = QPen(QColor(0, 191, 255, 150), 3, Qt.SolidLine)
+
+        self.connections = []
         self.update_timer = QTimer(self)
         self.update_timer.setInterval(50)
         self.update_timer.timeout.connect(self.update_all_connections)
@@ -119,14 +129,41 @@ class PPMScene(QGraphicsScene):
         self.connection_start_node = start_node
         self.connection_start_index = start_index
         self.temp_connection_line = QGraphicsPathItem()
-        self.temp_connection_line.setPen(QPen(QColor("#00BFFF"), 2, Qt.DotLine))
+        self.temp_connection_line.setPen(self.pen_dragging)
         self.addItem(self.temp_connection_line)
         self.update_temp_line(start_pos, start_pos)
 
     def mouseMoveEvent(self, event):
         if self.temp_connection_line:
             start_pos = self.connection_start_node.get_output_dot_positions()[self.connection_start_index]
-            self.update_temp_line(start_pos, event.scenePos())
+            end_pos = event.scenePos()
+
+            # Reset hover state
+            self.hovered_node = None
+            self.hovered_index = -1
+
+            # Check for a valid connection target under the cursor
+            items_under_cursor = self.items(event.scenePos())
+            for item in items_under_cursor:
+                if hasattr(item, 'get_input_dot_rects'):
+                    input_rects = item.get_input_dot_rects()
+                    for i, input_rect in enumerate(input_rects):
+                        if input_rect.contains(event.scenePos()) and not item.is_input_occupied(i):
+                            self.hovered_node = item
+                            self.hovered_index = i
+                            break
+                if self.hovered_node:
+                    break
+
+            if self.hovered_node:
+                # Snap to the dot and show the "ghost" connection
+                self.temp_connection_line.setPen(self.pen_hovering)
+                end_pos = self.hovered_node.get_input_dot_rects()[self.hovered_index].center()
+            else:
+                # No valid target, use the normal dragging line
+                self.temp_connection_line.setPen(self.pen_dragging)
+
+            self.update_temp_line(start_pos, end_pos)
         super().mouseMoveEvent(event)
 
     def update_temp_line(self, start_pos, end_pos):
@@ -139,25 +176,18 @@ class PPMScene(QGraphicsScene):
 
     def mouseReleaseEvent(self, event):
         if self.temp_connection_line:
-            items = self.items(event.scenePos())
-            valid_drop = False
-            for item in items:
-                if hasattr(item, 'get_input_dot_rects'):
-                    input_rects = item.get_input_dot_rects()
-                    for i, input_rect in enumerate(input_rects):
-                        if input_rect.contains(event.scenePos()):
-                            if item.is_input_occupied(i):
-                                print(f"Error: Input {i} on {item.title} is already occupied.")
-                            else:
-                                self.create_connection(self.connection_start_node, self.connection_start_index, item, i)
-                            valid_drop = True
-                            break
-                    if valid_drop:
-                        break
+            # If we were hovering over a valid target, create the connection
+            if self.hovered_node:
+                self.create_connection(self.connection_start_node, self.connection_start_index,
+                                       self.hovered_node, self.hovered_index)
+
+            # Cleanup
             self.removeItem(self.temp_connection_line)
             self.temp_connection_line = None
             self.connection_start_node = None
             self.connection_start_index = -1
+            self.hovered_node = None
+            self.hovered_index = -1
         super().mouseReleaseEvent(event)
 
     def create_connection(self, start_node, start_index, end_node, end_index=0):
@@ -175,9 +205,9 @@ class PPMScene(QGraphicsScene):
         if event.key() == Qt.Key_Delete:
             selected_items = self.selectedItems()
             for item in selected_items:
-                # Allow JoystickNode to be deleted as well
                 if isinstance(item, (JoystickNode, CustomLogicNode, BoostControlNode, ToggleNode,
-                                     ThreePositionSwitchNode, ExpoCurveNode, MixerNode, AxisToButtonsNode, SwitchGateNode)):
+                                     ThreePositionSwitchNode, ExpoCurveNode, MixerNode,
+                                     AxisToButtonsNode, SwitchGateNode)):
                     for conn in list(item.connections):
                         self.remove_connection(conn)
                     self.removeItem(item)
@@ -266,6 +296,9 @@ class PPMApp(QMainWindow):
         add_switch_gate_action = QAction("Switch Gate", self)
         add_switch_gate_action.triggered.connect(self.add_switch_gate_node)
         add_node_menu.addAction(add_switch_gate_action)
+        add_pedal_node_action = QAction("Pedal Control", self)
+        add_pedal_node_action.triggered.connect(self.add_pedal_control_node)
+        add_node_menu.addAction(add_pedal_node_action)
 
         add_node_button = QToolButton(self)
         add_node_button.setText("Add Node")
@@ -344,6 +377,10 @@ class PPMApp(QMainWindow):
 
     def add_switch_gate_node(self):
         node = SwitchGateNode(x=400, y=100)
+        self.scene.addItem(node)
+
+    def add_pedal_control_node(self):
+        node = PedalControlNode(x=400, y=100)
         self.scene.addItem(node)
 
     def auto_connect(self):
@@ -473,6 +510,8 @@ class PPMApp(QMainWindow):
                         node = AxisToButtonsNode(x=node_data['x'], y=node_data['y'])
                     elif node_type == "SwitchGateNode":
                         node = SwitchGateNode(x=node_data['x'], y=node_data['y'])
+                    elif node_type == "PedalControlNode":
+                        node = PedalControlNode(x=node_data['x'], y=node_data['y'])
 
                     # After creating any new node, restore its full state
                     if node:
