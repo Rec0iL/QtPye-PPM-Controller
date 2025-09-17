@@ -5,7 +5,7 @@ A flexible, node-based graphical interface for creating custom remote control se
 It's ideal for controlling FPV drones, RC cars, and other robotics projects from a Raspberry Pi or desktop computer, giving you complete control over your channels and logic.
 
 ![FPV Drone Layout](image_69a279.png)
-*(Example of an RC Car layout using the Custom Logic, Pedal Control and Boost Control nodes)*
+*(Example of an RC Car layout controlled by 2 input devices simultaneously using the Custom Logic, Pedal Control and Boost Control nodes)*
 
 ## Features
 
