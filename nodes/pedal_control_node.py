@@ -6,7 +6,7 @@ from .base_node import BaseNode, NodeSignalEmitter
 
 class PedalControlNode(BaseNode):
     def __init__(self, x=0, y=0, parent=None):
-        super().__init__(title="Pedal Control", x=x, y=y, w=250, h=230, parent=parent)
+        super().__init__(title="Pedal Control", x=x, y=y, w=250, h=260, parent=parent)
         self.inputs = 2
         self.inputs_occupied = [False] * self.inputs
         self.output_signals = [NodeSignalEmitter()]
@@ -50,7 +50,7 @@ class PedalControlNode(BaseNode):
         proxy.resize(self.width - 10, 120)
 
         # Connection dots at the bottom
-        y_start = 190
+        y_start = 215
         line_height = 25
         self.input_rects = [
             QRectF(-5, y_start - 5, 10, 10),
