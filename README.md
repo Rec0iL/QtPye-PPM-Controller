@@ -47,6 +47,7 @@ It's ideal for controlling FPV drones, RC cars, and other robotics projects from
 
 3.  **Install the required libraries:**
     ```bash
+    sudo apt-get install qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
     pip install pyqt5 pygame pyserial
     ```
     *(Note: On Raspberry Pi, you may need to install PyQt5 via `apt` first: `sudo apt install python3-pyqt5`)*
