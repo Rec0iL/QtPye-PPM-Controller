@@ -35,7 +35,7 @@ It's ideal for controlling FPV drones, RC cars, and other robotics projects from
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/Rec0iL/QtPye-PPM-Controller.git](https://github.com/Rec0iL/QtPye-PPM-Controller.git)
+    git clone https://github.com/Rec0iL/QtPye-PPM-Controller.git
     cd QtPye-PPM-Controller
     ```
 
