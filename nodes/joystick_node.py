@@ -19,7 +19,7 @@ class JoystickNode(BaseNode):
 
         item_height = 20
         hat_height = 40
-        h = 40 + (self.num_axes * item_height) + (self.num_buttons * item_height) + (self.num_hats * hat_height)
+        h = 50 + (self.num_axes * item_height) + (self.num_buttons * item_height) + (self.num_hats * hat_height)
 
         super().__init__(title=self.name, x=x, y=y, w=250, h=h, parent=parent)
         self._finish_init()

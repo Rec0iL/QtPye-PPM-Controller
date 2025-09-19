@@ -7,7 +7,7 @@ from .custom_logic_node import CustomLogicNode
 from .boost_control_node import BoostControlNode
 from .toggle_node import ToggleNode
 from .three_position_switch_node import ThreePositionSwitchNode
-from .expo_curve_node import ExpoCurveNode
+from .channel_config_node import ChannelConfigNode
 from .mixer_node import MixerNode
 from .axis_to_buttons_node import AxisToButtonsNode
 from .switch_gate_node import SwitchGateNode

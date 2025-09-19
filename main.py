@@ -13,7 +13,7 @@ from PyQt5.QtGui import (QBrush, QColor, QPainterPath, QPainter,
 from serial_manager import SerialManager
 from nodes import (BaseNode, PPMChannelNode, JoystickNode, CustomLogicNode,
                    BoostControlNode, ToggleNode, ThreePositionSwitchNode,
-                   ExpoCurveNode, MixerNode, AxisToButtonsNode, SwitchGateNode,
+                   ChannelConfigNode, MixerNode, AxisToButtonsNode, SwitchGateNode,
                    PedalControlNode)
 from connections import Connection
 
@@ -196,7 +196,7 @@ class PPMScene(QGraphicsScene):
             for item in selected_items:
                 if isinstance(item, (JoystickNode, CustomLogicNode, BoostControlNode, ToggleNode,
                                      ThreePositionSwitchNode, ExpoCurveNode, MixerNode,
-                                     AxisToButtonsNode, SwitchGateNode, PedalControlNode)):
+                                     AxisToButtonsNode, SwitchGateNode, PedalControlNode, ChannelConfigNode)):
                     for conn in list(item.connections):
                         self.remove_connection(conn)
                     self.removeItem(item)
@@ -254,7 +254,7 @@ class PPMApp(QMainWindow):
             "Boost Node": self.add_boost_node,
             "Toggle Switch": self.add_toggle_node,
             "3-Position Switch": self.add_three_position_switch_node,
-            "Expo Curve": self.add_expo_node,
+            "Channel Config": self.add_channel_config_node,
             "Mixer": self.add_mixer_node,
             "Axis to Buttons": self.add_axis_to_buttons_node,
             "Switch Gate": self.add_switch_gate_node,
@@ -378,8 +378,8 @@ class PPMApp(QMainWindow):
         node = ThreePositionSwitchNode(x=400, y=100)
         self.scene.addItem(node)
 
-    def add_expo_node(self):
-        node = ExpoCurveNode(x=400, y=100)
+    def add_channel_config_node(self):
+        node = ChannelConfigNode(x=400, y=100)
         self.scene.addItem(node)
 
     def add_mixer_node(self):
@@ -558,7 +558,8 @@ class PPMApp(QMainWindow):
                             break
                     if not node:
                         node = JoystickNode.create_disconnected(node_data)
-
+                elif node_type in ["ExpoCurveNode", "ChannelConfigNode"]:
+                    node = ChannelConfigNode(x=node_data['x'], y=node_data['y'])
                 # --- CORRECTED LOGIC FOR CUSTOM NODES ---
                 elif node_type == "CustomLogicNode":
                     # Special case: read the 'inputs' value from the save file

@@ -6,7 +6,7 @@ from .base_node import BaseNode, NodeSignalEmitter
 
 class MixerNode(BaseNode):
     def __init__(self, x=0, y=0, parent=None):
-        super().__init__(title="Mixer", x=x, y=y, w=220, h=200, parent=parent)
+        super().__init__(title="Mixer", x=x, y=y, w=220, h=230, parent=parent)
         self.inputs = 2
         self.inputs_occupied = [False] * self.inputs
         self.output_signals = [NodeSignalEmitter(), NodeSignalEmitter()]
@@ -42,7 +42,7 @@ class MixerNode(BaseNode):
         proxy.resize(self.width, 100)
 
         # Connection dots at the bottom
-        y_start = 160
+        y_start = 175
         line_height = 25
         self.input_rects = [
             QRectF(-5, y_start - 5, 10, 10),
