@@ -1,24 +1,85 @@
 {
     "nodes": [
         {
-            "id": "329aab17-0b61-42f1-9d1c-1ebae269fd77",
-            "type": "JoystickNode",
-            "title": "Xbox One S Controller (Disconnected)",
-            "x": 1017.25,
-            "y": 510.5,
-            "joystick_id": -1,
-            "guid": "050082795e040000200b000013050000",
-            "name": "Xbox One S Controller",
-            "num_axes": 6,
-            "num_buttons": 16,
-            "num_hats": 1
+            "id": "22d347e3-74a8-4499-b26d-ec14f905db5b",
+            "type": "SwitchGateNode",
+            "title": "Switch Gate",
+            "x": 1660.0,
+            "y": 467.0
+        },
+        {
+            "id": "e2144ce6-fc64-4e71-92d4-e6ed7f310d7e",
+            "type": "ToggleNode",
+            "title": "Toggle Switch",
+            "x": 1345.0,
+            "y": 396.0
+        },
+        {
+            "id": "d92d1377-e002-4882-b2d4-48174cab20ce",
+            "type": "ToggleNode",
+            "title": "Toggle Switch",
+            "x": 991.0,
+            "y": 194.0
+        },
+        {
+            "id": "5da65fb6-9b91-4615-875a-f4f78fff8bc6",
+            "type": "SwitchGateNode",
+            "title": "Switch Gate",
+            "x": 1300.0,
+            "y": 42.0
+        },
+        {
+            "id": "b7a99778-cd98-4491-b109-845601a5c51e",
+            "type": "CustomLogicNode",
+            "title": "Custom Logic",
+            "x": 416.0,
+            "y": 360.0,
+            "inputs": 1,
+            "formula": "Y = X1*0.5"
+        },
+        {
+            "id": "8b8eb43f-1f7a-46b7-9294-17fd48b0986d",
+            "type": "ChannelConfigNode",
+            "title": "Channel Config",
+            "x": 419.0,
+            "y": 538.0,
+            "expo_amount": 0.6,
+            "weight": 100.0,
+            "offset_us": 0
+        },
+        {
+            "id": "2b803054-fd8a-4296-85bc-a1323c715a79",
+            "type": "CustomLogicNode",
+            "title": "Custom Logic",
+            "x": 1321.0,
+            "y": 933.0,
+            "inputs": 2,
+            "formula": "Y = X1 + X2"
+        },
+        {
+            "id": "9e3df95a-9834-441e-812d-ae3cba03e128",
+            "type": "BoostControlNode",
+            "title": "Boost Control",
+            "x": 1928.0,
+            "y": 587.0
+        },
+        {
+            "id": "35951d1b-8e1b-4a68-a3bf-a83c295e991f",
+            "type": "PedalControlNode",
+            "title": "Pedal Control",
+            "x": 1318.0,
+            "y": 647.0,
+            "throttle_limit": 40,
+            "brake_limit": 30,
+            "brake_deadzone": 5,
+            "center_us": 1500
         },
         {
             "id": "de3189ec-d6e7-4496-941f-a719ac86072b",
             "type": "JoystickNode",
             "title": "Logitech Extreme 3D",
-            "x": 342.5,
-            "y": 76.25,
+            "x": 124.5,
+            "y": 31.25,
             "joystick_id": 0,
             "guid": "0300eb976d04000015c2000010010000",
             "name": "Logitech Extreme 3D",
@@ -27,59 +88,17 @@
             "num_hats": 1
         },
         {
-            "id": "e24b8653-c02e-4489-ba95-edcbad2ddc39",
-            "type": "CustomLogicNode",
-            "title": "Custom Logic",
-            "x": 1720.0,
-            "y": 390.0,
-            "inputs": 2,
-            "formula": "Y = X1 + X2"
-        },
-        {
-            "id": "35951d1b-8e1b-4a68-a3bf-a83c295e991f",
-            "type": "PedalControlNode",
-            "title": "Pedal Control",
-            "x": 1363.0,
-            "y": 365.0,
-            "throttle_limit": 40,
-            "brake_limit": 30,
-            "brake_deadzone": 5,
-            "center_us": 1500
-        },
-        {
-            "id": "0f19f368-c5c0-4f55-a267-7691954ef87c",
-            "type": "CustomLogicNode",
-            "title": "Custom Logic",
-            "x": 1455.6875000000002,
-            "y": 26.125000000000014,
-            "inputs": 2,
-            "formula": "Y = X1 + X2"
-        },
-        {
-            "id": "9e3df95a-9834-441e-812d-ae3cba03e128",
-            "type": "BoostControlNode",
-            "title": "Boost Control",
-            "x": 2007.0,
-            "y": 444.0
-        },
-        {
-            "id": "2b803054-fd8a-4296-85bc-a1323c715a79",
-            "type": "CustomLogicNode",
-            "title": "Custom Logic",
-            "x": 1716.0,
-            "y": 602.0,
-            "inputs": 2,
-            "formula": "Y = X1 + X2"
-        },
-        {
-            "id": "8b8eb43f-1f7a-46b7-9294-17fd48b0986d",
-            "type": "ChannelConfigNode",
-            "title": "Channel Config",
-            "x": 1080.0,
-            "y": 33.0,
-            "expo_amount": 0.6,
-            "weight": 120.0,
-            "offset_us": 10
+            "id": "329aab17-0b61-42f1-9d1c-1ebae269fd77",
+            "type": "JoystickNode",
+            "title": "Xbox One S Controller",
+            "x": 1011.25,
+            "y": 660.5,
+            "joystick_id": 1,
+            "guid": "050082795e040000200b000013050000",
+            "name": "Xbox One S Controller",
+            "num_axes": 6,
+            "num_buttons": 16,
+            "num_hats": 1
         },
         {
             "id": "1200b6da-9918-41d8-be2f-b50b3bd7465f",
@@ -93,66 +112,60 @@
             "id": "691e77e5-d254-4f3e-92bd-9128bc569781",
             "type": "PPMChannelNode",
             "title": "PPM Channel 7",
-            "x": 800.0,
-            "y": 950.0,
+            "x": 605.0,
+            "y": 1104.0,
             "inverted": false
         },
         {
             "id": "e1333fd4-fe5c-4046-8dce-fdcc475f2f14",
             "type": "PPMChannelNode",
             "title": "PPM Channel 6",
-            "x": 800.0,
-            "y": 800.0,
+            "x": 411.0,
+            "y": 1107.0,
             "inverted": false
         },
         {
             "id": "746b9c61-5a39-443c-b102-c5602334b1cc",
             "type": "PPMChannelNode",
             "title": "PPM Channel 5",
-            "x": 800.0,
-            "y": 650.0,
+            "x": 218.0,
+            "y": 1112.0,
             "inverted": false
         },
         {
             "id": "bc481546-cf2d-4179-a90f-b751aeffb312",
             "type": "PPMChannelNode",
             "title": "PPM Channel 4",
-            "x": 800.0,
-            "y": 500.0,
+            "x": 736.0,
+            "y": 913.0,
             "inverted": false
         },
         {
             "id": "dc5c7dda-2773-43ba-9a68-715c9500f5ba",
             "type": "PPMChannelNode",
             "title": "PPM Channel 3",
-            "x": 800.0,
-            "y": 350.0,
+            "x": 879.0,
+            "y": 492.0,
             "inverted": false
         },
         {
             "id": "17ce56b3-95ca-4a62-a4ec-3990ff6788e7",
             "type": "PPMChannelNode",
             "title": "PPM Channel 2",
-            "x": 1918.7499999999998,
-            "y": 65.62500000000001,
+            "x": 1574.75,
+            "y": 67.625,
             "inverted": false
         },
         {
             "id": "5ee47bc2-0dbb-4bac-ac2b-d3521956bfab",
             "type": "PPMChannelNode",
             "title": "PPM Channel 1",
-            "x": 2268.75,
-            "y": 555.75,
+            "x": 2203.75,
+            "y": 708.75,
             "inverted": false
         }
     ],
     "connections": [
-        {
-            "start_node_id": "de3189ec-d6e7-4496-941f-a719ac86072b",
-            "start_node_output_index": 3,
-            "end_node_id": "e24b8653-c02e-4489-ba95-edcbad2ddc39",
-            "end_node_input_index": 0
-        },
         {
             "start_node_id": "329aab17-0b61-42f1-9d1c-1ebae269fd77",
             "start_node_output_index": 4,
@@ -164,36 +177,6 @@
             "start_node_output_index": 5,
             "end_node_id": "35951d1b-8e1b-4a68-a3bf-a83c295e991f",
             "end_node_input_index": 1
-        },
-        {
-            "start_node_id": "35951d1b-8e1b-4a68-a3bf-a83c295e991f",
-            "start_node_output_index": 0,
-            "end_node_id": "e24b8653-c02e-4489-ba95-edcbad2ddc39",
-            "end_node_input_index": 1
-        },
-        {
-            "start_node_id": "329aab17-0b61-42f1-9d1c-1ebae269fd77",
-            "start_node_output_index": 0,
-            "end_node_id": "0f19f368-c5c0-4f55-a267-7691954ef87c",
-            "end_node_input_index": 1
-        },
-        {
-            "start_node_id": "de3189ec-d6e7-4496-941f-a719ac86072b",
-            "start_node_output_index": 0,
-            "end_node_id": "0f19f368-c5c0-4f55-a267-7691954ef87c",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_id": "0f19f368-c5c0-4f55-a267-7691954ef87c",
-            "start_node_output_index": 0,
-            "end_node_id": "17ce56b3-95ca-4a62-a4ec-3990ff6788e7",
-            "end_node_input_index": 0
-        },
-        {
-            "start_node_id": "e24b8653-c02e-4489-ba95-edcbad2ddc39",
-            "start_node_output_index": 0,
-            "end_node_id": "9e3df95a-9834-441e-812d-ae3cba03e128",
-            "end_node_input_index": 0
         },
         {
             "start_node_id": "2b803054-fd8a-4296-85bc-a1323c715a79",
@@ -230,6 +213,78 @@
             "start_node_output_index": 0,
             "end_node_id": "bc481546-cf2d-4179-a90f-b751aeffb312",
             "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "de3189ec-d6e7-4496-941f-a719ac86072b",
+            "start_node_output_index": 10,
+            "end_node_id": "b7a99778-cd98-4491-b109-845601a5c51e",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "b7a99778-cd98-4491-b109-845601a5c51e",
+            "start_node_output_index": 0,
+            "end_node_id": "dc5c7dda-2773-43ba-9a68-715c9500f5ba",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "de3189ec-d6e7-4496-941f-a719ac86072b",
+            "start_node_output_index": 0,
+            "end_node_id": "5da65fb6-9b91-4615-875a-f4f78fff8bc6",
+            "end_node_input_index": 1
+        },
+        {
+            "start_node_id": "329aab17-0b61-42f1-9d1c-1ebae269fd77",
+            "start_node_output_index": 0,
+            "end_node_id": "5da65fb6-9b91-4615-875a-f4f78fff8bc6",
+            "end_node_input_index": 2
+        },
+        {
+            "start_node_id": "de3189ec-d6e7-4496-941f-a719ac86072b",
+            "start_node_output_index": 11,
+            "end_node_id": "d92d1377-e002-4882-b2d4-48174cab20ce",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "d92d1377-e002-4882-b2d4-48174cab20ce",
+            "start_node_output_index": 0,
+            "end_node_id": "5da65fb6-9b91-4615-875a-f4f78fff8bc6",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "5da65fb6-9b91-4615-875a-f4f78fff8bc6",
+            "start_node_output_index": 0,
+            "end_node_id": "17ce56b3-95ca-4a62-a4ec-3990ff6788e7",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "e2144ce6-fc64-4e71-92d4-e6ed7f310d7e",
+            "start_node_output_index": 0,
+            "end_node_id": "22d347e3-74a8-4499-b26d-ec14f905db5b",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "de3189ec-d6e7-4496-941f-a719ac86072b",
+            "start_node_output_index": 11,
+            "end_node_id": "e2144ce6-fc64-4e71-92d4-e6ed7f310d7e",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "22d347e3-74a8-4499-b26d-ec14f905db5b",
+            "start_node_output_index": 0,
+            "end_node_id": "9e3df95a-9834-441e-812d-ae3cba03e128",
+            "end_node_input_index": 0
+        },
+        {
+            "start_node_id": "35951d1b-8e1b-4a68-a3bf-a83c295e991f",
+            "start_node_output_index": 0,
+            "end_node_id": "22d347e3-74a8-4499-b26d-ec14f905db5b",
+            "end_node_input_index": 2
+        },
+        {
+            "start_node_id": "de3189ec-d6e7-4496-941f-a719ac86072b",
+            "start_node_output_index": 3,
+            "end_node_id": "22d347e3-74a8-4499-b26d-ec14f905db5b",
+            "end_node_input_index": 1
         }
     ]
 }

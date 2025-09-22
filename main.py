@@ -195,7 +195,7 @@ class PPMScene(QGraphicsScene):
             selected_items = self.selectedItems()
             for item in selected_items:
                 if isinstance(item, (JoystickNode, CustomLogicNode, BoostControlNode, ToggleNode,
-                                     ThreePositionSwitchNode, ExpoCurveNode, MixerNode,
+                                     ThreePositionSwitchNode, MixerNode,
                                      AxisToButtonsNode, SwitchGateNode, PedalControlNode, ChannelConfigNode)):
                     for conn in list(item.connections):
                         self.remove_connection(conn)
