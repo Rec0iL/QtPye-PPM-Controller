@@ -1,51 +1,48 @@
 {
     "nodes": [
         {
-            "id": "22d347e3-74a8-4499-b26d-ec14f905db5b",
-            "type": "SwitchGateNode",
-            "title": "Switch Gate",
-            "x": 1660.0,
-            "y": 467.0
+            "id": "329aab17-0b61-42f1-9d1c-1ebae269fd77",
+            "type": "JoystickNode",
+            "title": "Xbox One S Controller",
+            "x": 963.75,
+            "y": 540.0,
+            "joystick_id": 1,
+            "guid": "050082795e040000200b000013050000",
+            "name": "Xbox One S Controller",
+            "num_axes": 6,
+            "num_buttons": 16,
+            "num_hats": 1
         },
         {
-            "id": "e2144ce6-fc64-4e71-92d4-e6ed7f310d7e",
-            "type": "ToggleNode",
-            "title": "Toggle Switch",
-            "x": 1345.0,
-            "y": 396.0
+            "id": "de3189ec-d6e7-4496-941f-a719ac86072b",
+            "type": "JoystickNode",
+            "title": "Logitech Extreme 3D",
+            "x": 116.0,
+            "y": 82.5,
+            "joystick_id": 0,
+            "guid": "0300eb976d04000015c2000010010000",
+            "name": "Logitech Extreme 3D",
+            "num_axes": 4,
+            "num_buttons": 12,
+            "num_hats": 1
         },
         {
-            "id": "d92d1377-e002-4882-b2d4-48174cab20ce",
-            "type": "ToggleNode",
-            "title": "Toggle Switch",
-            "x": 991.0,
-            "y": 194.0
+            "id": "35951d1b-8e1b-4a68-a3bf-a83c295e991f",
+            "type": "PedalControlNode",
+            "title": "Pedal Control",
+            "x": 1315.5,
+            "y": 639.5,
+            "throttle_limit": 30,
+            "brake_limit": 30,
+            "brake_deadzone": 5,
+            "center_us": 1500
         },
         {
-            "id": "5da65fb6-9b91-4615-875a-f4f78fff8bc6",
-            "type": "SwitchGateNode",
-            "title": "Switch Gate",
-            "x": 1300.0,
-            "y": 42.0
-        },
-        {
-            "id": "b7a99778-cd98-4491-b109-845601a5c51e",
-            "type": "CustomLogicNode",
-            "title": "Custom Logic",
-            "x": 416.0,
-            "y": 360.0,
-            "inputs": 1,
-            "formula": "Y = X1*0.5"
-        },
-        {
-            "id": "8b8eb43f-1f7a-46b7-9294-17fd48b0986d",
-            "type": "ChannelConfigNode",
-            "title": "Channel Config",
-            "x": 419.0,
-            "y": 538.0,
-            "expo_amount": 0.6,
-            "weight": 100.0,
-            "offset_us": 0
+            "id": "9e3df95a-9834-441e-812d-ae3cba03e128",
+            "type": "BoostControlNode",
+            "title": "Boost Control",
+            "x": 1904.25,
+            "y": 709.5
         },
         {
             "id": "2b803054-fd8a-4296-85bc-a1323c715a79",
@@ -57,55 +54,58 @@
             "formula": "Y = X1 + X2"
         },
         {
-            "id": "9e3df95a-9834-441e-812d-ae3cba03e128",
-            "type": "BoostControlNode",
-            "title": "Boost Control",
-            "x": 1928.0,
-            "y": 587.0
+            "id": "8b8eb43f-1f7a-46b7-9294-17fd48b0986d",
+            "type": "ChannelConfigNode",
+            "title": "Channel Config",
+            "x": 465.0,
+            "y": 540.0,
+            "expo_amount": 0.6,
+            "weight": 100.0,
+            "offset_us": 0
         },
         {
-            "id": "35951d1b-8e1b-4a68-a3bf-a83c295e991f",
-            "type": "PedalControlNode",
-            "title": "Pedal Control",
-            "x": 1318.0,
-            "y": 647.0,
-            "throttle_limit": 40,
-            "brake_limit": 30,
-            "brake_deadzone": 5,
-            "center_us": 1500
+            "id": "b7a99778-cd98-4491-b109-845601a5c51e",
+            "type": "CustomLogicNode",
+            "title": "Custom Logic",
+            "x": 465.0,
+            "y": 382.0,
+            "inputs": 1,
+            "formula": "Y = X1*0.5"
         },
         {
-            "id": "de3189ec-d6e7-4496-941f-a719ac86072b",
-            "type": "JoystickNode",
-            "title": "Logitech Extreme 3D",
-            "x": 124.5,
-            "y": 31.25,
-            "joystick_id": 0,
-            "guid": "0300eb976d04000015c2000010010000",
-            "name": "Logitech Extreme 3D",
-            "num_axes": 4,
-            "num_buttons": 12,
-            "num_hats": 1
+            "id": "5da65fb6-9b91-4615-875a-f4f78fff8bc6",
+            "type": "SwitchGateNode",
+            "title": "Switch Gate",
+            "x": 1300.0,
+            "y": 42.0
         },
         {
-            "id": "329aab17-0b61-42f1-9d1c-1ebae269fd77",
-            "type": "JoystickNode",
-            "title": "Xbox One S Controller",
-            "x": 1011.25,
-            "y": 660.5,
-            "joystick_id": 1,
-            "guid": "050082795e040000200b000013050000",
-            "name": "Xbox One S Controller",
-            "num_axes": 6,
-            "num_buttons": 16,
-            "num_hats": 1
+            "id": "d92d1377-e002-4882-b2d4-48174cab20ce",
+            "type": "ToggleNode",
+            "title": "Toggle Switch",
+            "x": 991.0,
+            "y": 194.0
+        },
+        {
+            "id": "e2144ce6-fc64-4e71-92d4-e6ed7f310d7e",
+            "type": "ToggleNode",
+            "title": "Toggle Switch",
+            "x": 1345.0,
+            "y": 396.0
+        },
+        {
+            "id": "22d347e3-74a8-4499-b26d-ec14f905db5b",
+            "type": "SwitchGateNode",
+            "title": "Switch Gate",
+            "x": 1660.0,
+            "y": 467.0
         },
         {
             "id": "1200b6da-9918-41d8-be2f-b50b3bd7465f",
             "type": "PPMChannelNode",
             "title": "PPM Channel 8",
-            "x": 800.0,
-            "y": 1100.0,
+            "x": 1662.5,
+            "y": 706.25,
             "inverted": false
         },
         {
@@ -144,8 +144,8 @@
             "id": "dc5c7dda-2773-43ba-9a68-715c9500f5ba",
             "type": "PPMChannelNode",
             "title": "PPM Channel 3",
-            "x": 879.0,
-            "y": 492.0,
+            "x": 736.0,
+            "y": 754.0,
             "inverted": false
         },
         {
@@ -160,8 +160,8 @@
             "id": "5ee47bc2-0dbb-4bac-ac2b-d3521956bfab",
             "type": "PPMChannelNode",
             "title": "PPM Channel 1",
-            "x": 2203.75,
-            "y": 708.75,
+            "x": 2007.5,
+            "y": 1100.0,
             "inverted": false
         }
     ],

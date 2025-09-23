@@ -306,6 +306,8 @@ class PPMApp(QMainWindow):
         self.statusBar()
         self.status_label = QLabel("Disconnected")
         self.statusBar().addWidget(self.status_label)
+        self.sps_label = QLabel("SPS: 0")
+        self.statusBar().addPermanentWidget(self.sps_label)
         self.max_log_blocks = 500
 
         self.load_layout()
@@ -315,6 +317,10 @@ class PPMApp(QMainWindow):
         self.joystick_check_timer.setInterval(1000)
         self.joystick_check_timer.timeout.connect(self._check_joystick_events)
         self.joystick_check_timer.start()
+
+    def update_sps_display(self, sps_value):
+        """Updates the SPS counter in the status bar."""
+        self.sps_label.setText(f"SPS: {sps_value}")
 
     def _rebuild_joystick_menu(self):
         for action in self.add_node_menu.actions():

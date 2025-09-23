@@ -6,6 +6,7 @@ import time
 class SerialManager(QObject):
     connection_status_changed = pyqtSignal(bool)
     log_message = pyqtSignal(str, bool)
+    sps_updated = pyqtSignal(int) # New signal for the SPS value
 
     def __init__(self):
         super().__init__()
@@ -16,6 +17,7 @@ class SerialManager(QObject):
 
         self.channel_values = {i: 1500 for i in range(1, 9)}
         self.raw_log_batch = []
+        self.sps_counter = 0 # Counter for signals per second
 
         # Timer for sending PPM data (50 Hz)
         self.transmit_timer = QTimer(self)
@@ -29,8 +31,13 @@ class SerialManager(QObject):
 
         # New timer to batch log updates (5 Hz)
         self.log_update_timer = QTimer(self)
-        self.log_update_timer.setInterval(200) # 200 ms = 5 Hz
+        self.log_update_timer.setInterval(200)
         self.log_update_timer.timeout.connect(self._emit_batched_logs)
+
+        # New timer to report the SPS count once per second
+        self.sps_timer = QTimer(self)
+        self.sps_timer.setInterval(1000)
+        self.sps_timer.timeout.connect(self._report_sps)
 
     def list_ports(self):
         ports = serial.tools.list_ports.comports()
@@ -46,7 +53,8 @@ class SerialManager(QObject):
             self.log_message.emit(f"Connected to {port_name} at {self.baud_rate} baud.", False)
             self.read_timer.start()
             self.transmit_timer.start()
-            self.log_update_timer.start() # Start the log batching timer
+            self.log_update_timer.start()
+            self.sps_timer.start() # Start the SPS timer
             return True
         except serial.SerialException as e:
             self.log_message.emit(f"Error connecting: {e}", False)
@@ -56,7 +64,9 @@ class SerialManager(QObject):
     def disconnect(self):
         self.transmit_timer.stop()
         self.read_timer.stop()
-        self.log_update_timer.stop() # Stop the log batching timer
+        self.log_update_timer.stop()
+        self.sps_timer.stop() # Stop the SPS timer
+        self.sps_updated.emit(0) # Reset SPS display to 0
         self.raw_log_batch.clear()
         if self.ser and self.ser.is_open:
             self.ser.close()
@@ -80,11 +90,10 @@ class SerialManager(QObject):
                 for channel, value in self.channel_values.items():
                     command_str = f"{channel}={value}"
                     self.ser.write(command_str.encode())
+                    self.sps_counter += 1 # Increment for each command sent
 
                     if self.is_raw_mode:
-                        # Add to batch instead of emitting a signal immediately
                         self.raw_log_batch.append(f"Sent: {command_str}")
-
             except serial.SerialException as e:
                 self.log_message.emit(f"Error sending data: {e}", False)
                 self.disconnect()
@@ -93,7 +102,6 @@ class SerialManager(QObject):
         if self.ser and self.ser.is_open and self.ser.in_waiting > 0:
             data = self.ser.read_all()
             if self.is_raw_mode:
-                 # Add to batch instead of emitting a signal immediately
                 self.raw_log_batch.append(f"Received (raw): {data}")
             else:
                 try:
@@ -104,8 +112,12 @@ class SerialManager(QObject):
                     self.log_message.emit(f"Received (raw): {data}", True)
 
     def _emit_batched_logs(self):
-        """Called by a timer to send all collected raw logs in a single update."""
         if self.raw_log_batch:
             full_log_message = "\n".join(self.raw_log_batch)
             self.log_message.emit(full_log_message, True)
             self.raw_log_batch.clear()
+
+    def _report_sps(self):
+        """Called once per second to report the signal count and reset it."""
+        self.sps_updated.emit(self.sps_counter)
+        self.sps_counter = 0
