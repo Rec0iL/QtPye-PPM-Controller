@@ -19,13 +19,20 @@ class PPMChannelNode(BaseNode):
         self.input_rect = QRectF(-5, 100 - 5, 10, 10)
         self.checkbox_rect = QRectF(10, 35, 120, 20)
 
+        # --- FIX ---
+        # Create the style option object ONCE and store it.
+        self.checkbox_option = QStyleOptionButton()
+        self.checkbox_option.text = "Invert Output"
+
+
     def paint(self, painter, option, widget=None):
         super().paint(painter, option, widget)
 
         # --- Manually Draw the Checkbox ---
-        opt = QStyleOptionButton()
-        opt.rect = self.checkbox_rect.toRect()
-        opt.text = "Invert Output"
+        # --- FIX ---
+        # Reuse the existing object instead of creating a new one.
+        opt = self.checkbox_option
+        opt.rect = self.checkbox_rect.toRect() # Update the rect each time
         opt.state = QStyle.State_Enabled
         if self.inverted:
             opt.state |= QStyle.State_On
