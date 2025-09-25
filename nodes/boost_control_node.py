@@ -35,7 +35,33 @@ class BoostControlNode(BaseNode):
         # UI elements are positioned at the top
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        # ... (UI setup code is unchanged)
+        layout.setContentsMargins(10, 5, 10, 5)
+        layout.addWidget(QLabel("Status:"))
+        self.status_label = QLabel("Ready")
+        self.status_label.setStyleSheet("font-weight: bold; color: green;")
+        layout.addWidget(self.status_label)
+
+        hbox1 = QHBoxLayout()
+        hbox1.addWidget(QLabel("Boost Dur (s):"))
+        self.boost_duration_edit = QLineEdit(str(self.boost_duration_s))
+        hbox1.addWidget(self.boost_duration_edit)
+        layout.addLayout(hbox1)
+
+        hbox2 = QHBoxLayout()
+        hbox2.addWidget(QLabel("Cooldown (s):"))
+        self.cooldown_duration_edit = QLineEdit(str(self.cooldown_duration_s))
+        hbox2.addWidget(self.cooldown_duration_edit)
+        layout.addLayout(hbox2)
+
+        hbox3 = QHBoxLayout()
+        hbox3.addWidget(QLabel("Boost Amt (µs):"))
+        self.boost_amount_edit = QLineEdit(str(self.boost_amount_us))
+        hbox3.addWidget(self.boost_amount_edit)
+        layout.addLayout(hbox3)
+
+        self.boost_duration_edit.editingFinished.connect(self._update_boost_duration)
+        self.cooldown_duration_edit.editingFinished.connect(self._update_cooldown_duration)
+        self.boost_amount_edit.editingFinished.connect(self._update_boost_amount)
 
         proxy = QGraphicsProxyWidget(self)
         proxy.setWidget(widget)
@@ -50,7 +76,6 @@ class BoostControlNode(BaseNode):
         output_y = (210 + 235) / 2 # Center between inputs
         self.output_rect = QRectF(self.width - 5, output_y - 5, 10, 10)
 
-    # --- NEW METHOD ---
     def cleanup(self):
         """Stops and deletes the timers to prevent memory leaks."""
         if self.boost_timer:
