@@ -197,8 +197,16 @@ class PPMScene(QGraphicsScene):
                 if isinstance(item, (JoystickNode, CustomLogicNode, BoostControlNode, ToggleNode,
                                      ThreePositionSwitchNode, MixerNode,
                                      AxisToButtonsNode, SwitchGateNode, PedalControlNode, ChannelConfigNode)):
+                    # First, remove all connections associated with the node
                     for conn in list(item.connections):
                         self.remove_connection(conn)
+
+                    # --- MODIFIED SECTION ---
+                    # Call the cleanup method to stop timers and other resources
+                    if hasattr(item, 'cleanup'):
+                        item.cleanup()
+
+                    # Finally, remove the item from the scene
                     self.removeItem(item)
         else:
             super().keyPressEvent(event)

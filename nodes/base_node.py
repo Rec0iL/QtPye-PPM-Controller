@@ -56,6 +56,16 @@ class BaseNode(QGraphicsItem):
         if connection_to_remove in self.connections:
             self.connections.remove(connection_to_remove)
 
+    # --- NEW METHOD ---
+    def cleanup(self):
+        """
+        Clean up resources used by the node.
+        Child classes should override this to stop timers, etc.
+        """
+        print(f"Cleaning up base node: {self.title}")
+        # Base implementation does nothing, but it's here to be overridden.
+        pass
+
     def get_state(self):
         return {
             'id': self.id,

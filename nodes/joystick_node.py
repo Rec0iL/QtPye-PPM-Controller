@@ -24,6 +24,16 @@ class JoystickNode(BaseNode):
         super().__init__(title=self.name, x=x, y=y, w=250, h=h, parent=parent)
         self._finish_init()
 
+    # --- NEW METHOD ---
+    def cleanup(self):
+        """Stops and deletes the timer to prevent memory leaks."""
+        if self.poll_timer:
+            self.poll_timer.stop()
+            self.poll_timer.deleteLater() # Use deleteLater for safe Qt object removal
+            self.poll_timer = None
+            print(f"Cleaned up timer for Joystick: {self.name}")
+        super().cleanup()
+
     @classmethod
     def create_disconnected(cls, node_data):
         instance = cls.__new__(cls)
@@ -41,7 +51,9 @@ class JoystickNode(BaseNode):
 
         super(JoystickNode, instance).__init__(title=f"{instance.name} (Disconnected)", x=node_data['x'], y=node_data['y'], w=250, h=h)
         instance._finish_init()
-        instance.poll_timer.stop()
+        # Ensure the timer is not started for a disconnected node
+        if instance.poll_timer:
+            instance.poll_timer.stop()
         return instance
 
     def _initialize_properties(self, defaults=None):
@@ -60,17 +72,22 @@ class JoystickNode(BaseNode):
         self.axis_values = [0.0] * self.num_axes
         self.button_values = [0] * self.num_buttons
         self.hat_values = [(0, 0)] * self.num_hats
+
+        # Initialize the timer, but don't parent it to self
         self.poll_timer = QTimer()
         self.poll_timer.setInterval(20)
         self.poll_timer.timeout.connect(self.update_joystick_state)
+
         if self.is_connected:
             self.poll_timer.start()
+
         num_outputs = self.num_axes + self.num_buttons + (self.num_hats * 2)
         self.output_signals = [NodeSignalEmitter() for _ in range(num_outputs)]
 
     def disconnect(self):
         self.is_connected = False
-        self.poll_timer.stop()
+        if self.poll_timer:
+            self.poll_timer.stop()
         self.title = f"{self.name} (Disconnected)"
         self.update()
 
@@ -80,7 +97,8 @@ class JoystickNode(BaseNode):
         self.joystick_id = new_joystick_id
         self.instance_id = self.joystick.get_instance_id()
         self.is_connected = True
-        self.poll_timer.start()
+        if self.poll_timer:
+            self.poll_timer.start()
         self.title = self.name
         self.update()
         print(f"Reconnected '{self.name}' on ID {self.joystick_id}")
