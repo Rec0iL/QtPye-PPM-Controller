@@ -1,6 +1,7 @@
 import sys
 import json
 import pygame
+import tracemalloc
 from functools import partial
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QDockWidget, QTextEdit, QGraphicsView, QGraphicsScene,
