@@ -194,14 +194,11 @@ class PPMScene(QGraphicsScene):
         if event.key() == Qt.Key_Delete:
             selected_items = self.selectedItems()
             for item in selected_items:
-                if isinstance(item, (JoystickNode, CustomLogicNode, BoostControlNode, ToggleNode,
-                                     ThreePositionSwitchNode, MixerNode,
-                                     AxisToButtonsNode, SwitchGateNode, PedalControlNode, ChannelConfigNode)):
+                if isinstance(item, (BaseNode)):
                     # First, remove all connections associated with the node
                     for conn in list(item.connections):
                         self.remove_connection(conn)
 
-                    # --- MODIFIED SECTION ---
                     # Call the cleanup method to stop timers and other resources
                     if hasattr(item, 'cleanup'):
                         item.cleanup()
@@ -285,7 +282,6 @@ class PPMApp(QMainWindow):
         toolbar.addWidget(add_node_button)
         toolbar.addSeparator()
 
-        # ... (rest of toolbar setup)
         select_port_action = QAction(QIcon.fromTheme("folder-remote"), "Select Port", self)
         select_port_action.triggered.connect(self.show_port_selection)
         toolbar.addAction(select_port_action)
@@ -347,33 +343,37 @@ class PPMApp(QMainWindow):
             self.add_node_menu.insertSeparator(first_action)
 
     def _check_joystick_events(self):
-        pygame.joystick.quit()
-        pygame.joystick.init()
-
-        connected_instance_ids = {pygame.joystick.Joystick(i).get_instance_id(): i for i in range(pygame.joystick.get_count())}
+        pygame.event.pump()
         scene_joysticks = [item for item in self.scene.items() if isinstance(item, JoystickNode)]
 
-        # Check for newly added joysticks that aren't in the scene
-        live_guids = {pygame.joystick.Joystick(i).get_guid() for i in range(pygame.joystick.get_count())}
-        scene_guids = {node.guid for node in scene_joysticks}
-        if live_guids - scene_guids:
-            print("New joystick detected, rebuilding menu.")
-            self._rebuild_joystick_menu()
+        for event in pygame.event.get():
+            if event.type == pygame.JOYDEVICEADDED:
+                pygame.joystick.init()
+                self._rebuild_joystick_menu()
+                new_joy = pygame.joystick.Joystick(event.device_index)
+                new_joy.init()
 
-        for node in scene_joysticks:
-            is_now_connected = node.instance_id in connected_instance_ids
-            if node.is_connected and not is_now_connected:
-                node.disconnect()
-                print(f"Disconnected '{node.name}' (Instance ID: {node.instance_id})")
-            elif not node.is_connected and is_now_connected:
-                new_joystick_id = connected_instance_ids[node.instance_id]
-                node.reconnect(new_joystick_id)
+                reconnected = False
+                for node in scene_joysticks:
+                    if not node.is_connected and node.guid == new_joy.get_guid():
+                        node.reconnect(event.device_index)
+                        reconnected = True
+                        break
+                if not reconnected:
+                    print(f"New, unassigned joystick added: {new_joy.get_name()}")
+
+            if event.type == pygame.JOYDEVICEREMOVED:
+                for node in scene_joysticks:
+                    if node.instance_id == event.instance_id:
+                        node.disconnect()
+                        print(f"Disconnected '{node.name}'")
+                        break
 
     def add_joystick_node(self, joystick_id):
         try:
             node = JoystickNode(joystick_id, x=50, y=50)
             self.scene.addItem(node)
-        except ValueError as e:
+        except pygame.error as e:
             print(f"Error adding joystick {joystick_id}: {e}")
 
     def add_custom_node(self, inputs):
@@ -413,24 +413,14 @@ class PPMApp(QMainWindow):
         self.scene.addItem(node)
 
     def center_view_on_nodes(self):
-        """Calculates the average position of all nodes and centers the view on it."""
         nodes = [item for item in self.scene.items() if isinstance(item, BaseNode)]
         if not nodes:
             return
-
-        total_x = 0
-        total_y = 0
-        for node in nodes:
-            # Add half the node's width/height to find its center
-            total_x += node.pos().x() + node.width / 2
-            total_y += node.pos().y() + node.height / 2
-
+        total_x = sum(node.pos().x() + node.width / 2 for node in nodes)
+        total_y = sum(node.pos().y() + node.height / 2 for node in nodes)
         avg_x = total_x / len(nodes)
         avg_y = total_y / len(nodes)
-
-        # Center the view on the average point
         self.view.centerOn(avg_x, avg_y)
-        print(f"View centered on ({avg_x:.0f}, {avg_y:.0f})")
 
     def auto_connect(self):
         default_port = "/dev/ttyACM0"
@@ -471,69 +461,53 @@ class PPMApp(QMainWindow):
             self.disconnect_action.setEnabled(False)
 
     def append_log(self, message, is_raw):
+        # --- NEW, SIMPLIFIED & CORRECTED METHOD ---
+        # Keep the console scrolled to the bottom if it's already there
+        scroll_bar = self.console_text.verticalScrollBar()
+        scroll_at_bottom = scroll_bar.value() >= scroll_bar.maximum() - 10
+
+        # Trim the log if it exceeds the max number of blocks
         document = self.console_text.document()
         if document.blockCount() > self.max_log_blocks:
             cursor = self.console_text.textCursor()
             cursor.movePosition(cursor.Start)
-            cursor.movePosition(cursor.NextBlock, cursor.KeepAnchor,
-                                document.blockCount() - self.max_log_blocks)
+            # Select the number of blocks to remove from the top
+            blocks_to_remove = document.blockCount() - self.max_log_blocks
+            cursor.movePosition(cursor.NextBlock, cursor.KeepAnchor, blocks_to_remove)
             cursor.removeSelectedText()
-            cursor.movePosition(cursor.End)
+
+        # Move cursor to the end to append new text
         cursor = self.console_text.textCursor()
         cursor.movePosition(cursor.End)
         self.console_text.setTextCursor(cursor)
+
+        # Append new messages. This is the key fix.
         if is_raw:
-            self.console_text.insertHtml(f"<span style='color: #FFC107;'>[RAW] {message}</span><br>")
+            # Split the batched raw message and append each line.
+            # This ensures the blockCount is accurate.
+            for line in message.split('\n'):
+                if line: # Avoid adding empty lines
+                    self.console_text.insertHtml(f"<span style='color: #FFC107;'>[RAW] {line}</span><br>")
         else:
+            # For regular messages, insertPlainText is fine.
             self.console_text.insertPlainText(message + '\n')
-        self.console_text.verticalScrollBar().setValue(self.console_text.verticalScrollBar().maximum())
+
+        # Restore scroll position
+        if scroll_at_bottom:
+            scroll_bar.setValue(scroll_bar.maximum())
 
     def toggle_raw_mode(self, state):
         self.serial_manager.is_raw_mode = (state == Qt.Checked)
 
-    def _check_joystick_events(self):
-        pygame.event.pump()
-        scene_joysticks = [item for item in self.scene.items() if isinstance(item, JoystickNode)]
-
-        for event in pygame.event.get():
-            if event.type == pygame.JOYDEVICEADDED:
-                pygame.joystick.init() # Re-initialize to recognize the new device
-                self._rebuild_joystick_menu()
-                new_joy = pygame.joystick.Joystick(event.device_index)
-                new_joy.init()
-
-                # Check if a disconnected node matches the new device's GUID
-                reconnected = False
-                for node in scene_joysticks:
-                    if not node.is_connected and node.guid == new_joy.get_guid():
-                        node.reconnect(event.device_index)
-                        reconnected = True
-                        break
-
-                if not reconnected:
-                    print(f"New, unassigned joystick added: {new_joy.get_name()}")
-                    # Optionally, you could automatically add a new node here
-
-            if event.type == pygame.JOYDEVICEREMOVED:
-                for node in scene_joysticks:
-                    if node.instance_id == event.instance_id:
-                        node.disconnect()
-                        print(f"Disconnected '{node.name}'")
-                        break
-
     def save_layout(self):
-        nodes = []
-        for item in self.scene.items():
-            if isinstance(item, BaseNode):
-                nodes.append(item.get_state())
-        connections = []
-        for conn in self.scene.connections:
-            connections.append({
-                "start_node_id": conn.start_node.id,
-                "start_node_output_index": conn.start_index,
-                "end_node_id": conn.end_node.id,
-                "end_node_input_index": conn.end_index
-            })
+        nodes = [item.get_state() for item in self.scene.items() if isinstance(item, BaseNode)]
+        connections = [{
+            "start_node_id": conn.start_node.id,
+            "start_node_output_index": conn.start_index,
+            "end_node_id": conn.end_node.id,
+            "end_node_input_index": conn.end_index
+        } for conn in self.scene.connections]
+
         with open("layout.json", "w") as f:
             json.dump({"nodes": nodes, "connections": connections}, f, indent=4)
         print("Layout saved.")
@@ -543,77 +517,84 @@ class PPMApp(QMainWindow):
         try:
             with open("layout.json", "r") as f:
                 data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            print(f"Could not load layout.json: {e}")
+            self.append_log("No valid layout.json found. Starting fresh.", False)
+            return
 
-            for item in list(self.scene.items()):
-                if isinstance(item, Connection):
-                    self.remove_connection(item)
-                elif not isinstance(item, (PPMChannelNode)): # Keep PPM nodes
-                    self.scene.removeItem(item)
+        # Clear existing dynamic nodes and all connections
+        for item in list(self.scene.items()):
+            if isinstance(item, Connection):
+                self.scene.remove_connection(item)
+            elif not isinstance(item, PPMChannelNode):
+                if hasattr(item, 'cleanup'): item.cleanup()
+                self.scene.removeItem(item)
 
-            node_map_by_title = {item.title: item for item in self.scene.items() if isinstance(item, PPMChannelNode)}
-            node_map_by_id = {}
+        node_map_by_id = {item.id: item for item in self.scene.items() if isinstance(item, BaseNode)}
 
-            for node_data in data["nodes"]:
-                node_type = node_data.get("type")
-                title = node_data.get("title")
-                node_id = node_data.get("id")
-                node = None
+        # Load nodes
+        node_classes = {
+            "JoystickNode": JoystickNode, "CustomLogicNode": CustomLogicNode,
+            "BoostControlNode": BoostControlNode, "ToggleNode": ToggleNode,
+            "ThreePositionSwitchNode": ThreePositionSwitchNode,
+            "ChannelConfigNode": ChannelConfigNode, "MixerNode": MixerNode,
+            "AxisToButtonsNode": AxisToButtonsNode, "SwitchGateNode": SwitchGateNode,
+            "PedalControlNode": PedalControlNode
+        }
 
-                if node_type == "PPMChannelNode":
-                    node = node_map_by_title.get(title)
-                elif node_type == "JoystickNode":
-                    guid = node_data.get('guid')
-                    name = node_data.get('name')
-                    for i in range(pygame.joystick.get_count()):
-                        joy = pygame.joystick.Joystick(i)
-                        joy.init()
-                        if joy.get_guid() == guid:
-                            node = JoystickNode(i, node_data['x'], node_data['y'])
-                            break
-                    if not node:
-                        node = JoystickNode.create_disconnected(node_data)
-                elif node_type in ["ExpoCurveNode", "ChannelConfigNode"]:
-                    node = ChannelConfigNode(x=node_data['x'], y=node_data['y'])
-                # --- CORRECTED LOGIC FOR CUSTOM NODES ---
-                elif node_type == "CustomLogicNode":
-                    # Special case: read the 'inputs' value from the save file
-                    num_inputs = node_data.get('inputs', 1)
-                    node = CustomLogicNode(x=node_data['x'], y=node_data['y'], inputs=num_inputs)
-                else:
-                    # Generic case for all other simple nodes
-                    node_class = globals().get(node_type)
-                    if node_class:
-                        node = node_class(x=node_data['x'], y=node_data['y'])
+        for node_data in data.get("nodes", []):
+            node_type = node_data.get("type")
+            if node_type == "PPMChannelNode":
+                # Find the existing PPM node and apply its state
+                for node in self.ppm_nodes:
+                    if node.title == node_data.get("title"):
+                        node.id = node_data['id']
+                        node.set_state(node_data)
+                        node_map_by_id[node.id] = node
+                        break
+                continue
 
-                if node:
-                    node.id = node_id
-                    node.set_state(node_data)
-                    if node not in self.scene.items():
-                        self.scene.addItem(node)
-                    node_map_by_id[node.id] = node
+            node = None
+            if node_type == "JoystickNode":
+                guid = node_data.get('guid')
+                is_connected = False
+                for i in range(pygame.joystick.get_count()):
+                    joy = pygame.joystick.Joystick(i)
+                    if joy.get_guid() == guid:
+                        node = JoystickNode(i, node_data['x'], node_data['y'])
+                        is_connected = True
+                        break
+                if not is_connected:
+                    node = JoystickNode.create_disconnected(node_data)
 
-            for conn_data in data["connections"]:
-                start_node_id = conn_data.get("start_node_id")
-                end_node_id = conn_data.get("end_node_id")
-                if start_node_id in node_map_by_id and end_node_id in node_map_by_id:
-                    start_node = node_map_by_id[start_node_id]
-                    end_node = node_map_by_id[end_node_id]
-                    # The create_connection method from the previous fix will prevent crashes here
-                    self.scene.create_connection(
-                        start_node, conn_data["start_node_output_index"],
-                        end_node, conn_data["end_node_input_index"]
-                    )
+            elif node_type == "CustomLogicNode":
+                num_inputs = node_data.get('inputs', 1)
+                node = CustomLogicNode(x=node_data['x'], y=node_data['y'], inputs=num_inputs)
 
-            print("Layout loaded.")
-            self.append_log("Layout loaded from layout.json", False)
-        except FileNotFoundError:
-            print("No layout.json file found to load.")
-            self.append_log("No layout.json file found to load.", False)
-        except Exception as e:
-            print(f"Error loading layout: {e}")
-            self.append_log(f"Error loading layout: {e}", False)
-        finally:
-            self.center_view_on_nodes()
+            else:
+                node_class = node_classes.get(node_type)
+                if node_class:
+                    node = node_class(x=node_data['x'], y=node_data['y'])
+
+            if node:
+                node.id = node_data['id']
+                node.set_state(node_data)
+                self.scene.addItem(node)
+                node_map_by_id[node.id] = node
+
+        # Load connections
+        for conn_data in data.get("connections", []):
+            start_node = node_map_by_id.get(conn_data["start_node_id"])
+            end_node = node_map_by_id.get(conn_data["end_node_id"])
+            if start_node and end_node:
+                self.scene.create_connection(
+                    start_node, conn_data["start_node_output_index"],
+                    end_node, conn_data["end_node_input_index"]
+                )
+
+        self.append_log("Layout loaded from layout.json", False)
+        self.center_view_on_nodes()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
