@@ -17,6 +17,29 @@ from nodes import (BaseNode, PPMChannelNode, JoystickNode, CustomLogicNode,
                    PedalControlNode)
 from connections import Connection
 
+class MemoryProfiler:
+    def __init__(self, interval_ms=30000):
+        """Initializes and starts the memory profiler."""
+        print("Starting memory profiler...")
+        tracemalloc.start()
+
+        self.timer = QTimer()
+        self.timer.setInterval(interval_ms)
+        self.timer.timeout.connect(self.print_snapshot)
+        self.timer.start()
+
+    def print_snapshot(self):
+        """Takes a snapshot and prints the top 15 memory-allocating lines."""
+        snapshot = tracemalloc.take_snapshot()
+        top_stats = snapshot.statistics('lineno')
+
+        print("\n" + "="*40)
+        print("TOP 15 MEMORY USAGE LINES")
+        print("="*40)
+        for stat in top_stats[:15]:
+            print(stat)
+        print("="*40 + "\n")
+
 class PortSelectionDialog(QDialog):
     def __init__(self, ports):
         super().__init__()
@@ -211,6 +234,7 @@ class PPMScene(QGraphicsScene):
 class PPMApp(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.profiler = MemoryProfiler()
         self.setWindowTitle("QtPye-PPM-Controller")
         self.setGeometry(100, 100, 1200, 800)
 
