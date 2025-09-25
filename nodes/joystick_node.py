@@ -15,6 +15,10 @@ class JoystickNode(BaseNode):
         self.name = self.joystick.get_name()
         self.is_connected = True
 
+        # --- FIX ---
+        # Initialize a placeholder for our cached font_metrics object
+        self.font_metrics = None
+
         self._initialize_properties()
 
         item_height = 20
@@ -24,7 +28,6 @@ class JoystickNode(BaseNode):
         super().__init__(title=self.name, x=x, y=y, w=250, h=h, parent=parent)
         self._finish_init()
 
-    # --- NEW METHOD ---
     def cleanup(self):
         """Stops and deletes the timer to prevent memory leaks."""
         if self.poll_timer:
@@ -43,6 +46,9 @@ class JoystickNode(BaseNode):
         instance.guid = node_data.get('guid', '')
         instance.name = node_data.get('name', 'Unknown Joystick')
 
+        # --- FIX ---
+        instance.font_metrics = None
+
         instance._initialize_properties(defaults=node_data)
 
         item_height = 20
@@ -51,7 +57,6 @@ class JoystickNode(BaseNode):
 
         super(JoystickNode, instance).__init__(title=f"{instance.name} (Disconnected)", x=node_data['x'], y=node_data['y'], w=250, h=h)
         instance._finish_init()
-        # Ensure the timer is not started for a disconnected node
         if instance.poll_timer:
             instance.poll_timer.stop()
         return instance
@@ -72,22 +77,17 @@ class JoystickNode(BaseNode):
         self.axis_values = [0.0] * self.num_axes
         self.button_values = [0] * self.num_buttons
         self.hat_values = [(0, 0)] * self.num_hats
-
-        # Initialize the timer, but don't parent it to self
         self.poll_timer = QTimer()
         self.poll_timer.setInterval(20)
         self.poll_timer.timeout.connect(self.update_joystick_state)
-
         if self.is_connected:
             self.poll_timer.start()
-
         num_outputs = self.num_axes + self.num_buttons + (self.num_hats * 2)
         self.output_signals = [NodeSignalEmitter() for _ in range(num_outputs)]
 
     def disconnect(self):
         self.is_connected = False
-        if self.poll_timer:
-            self.poll_timer.stop()
+        self.poll_timer.stop()
         self.title = f"{self.name} (Disconnected)"
         self.update()
 
@@ -97,8 +97,7 @@ class JoystickNode(BaseNode):
         self.joystick_id = new_joystick_id
         self.instance_id = self.joystick.get_instance_id()
         self.is_connected = True
-        if self.poll_timer:
-            self.poll_timer.start()
+        self.poll_timer.start()
         self.title = self.name
         self.update()
         print(f"Reconnected '{self.name}' on ID {self.joystick_id}")
@@ -245,11 +244,16 @@ class JoystickNode(BaseNode):
             self._paint_label(painter, "Hat Y", y_y, align_right=True)
 
     def _paint_label(self, painter, text, y, align_right=False):
+        # --- FIX ---
+        # Cache the font_metrics object on the first paint call
+        if self.font_metrics is None:
+            self.font_metrics = QFontMetrics(painter.font())
+
         painter.setPen(QPen(QColor("#E0E0E0")))
-        font_metrics = QFontMetrics(painter.font())
-        text_y = y - (font_metrics.height() / 2) + font_metrics.ascent()
+        text_y = y - (self.font_metrics.height() / 2) + self.font_metrics.ascent()
+
         if align_right:
-            text_x = self.width - 20 - font_metrics.width(text)
+            text_x = self.width - 20 - self.font_metrics.horizontalAdvance(text)
             painter.drawText(QPointF(text_x, text_y), text)
         else:
             painter.drawText(QPointF(15, text_y), text)
