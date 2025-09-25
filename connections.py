@@ -17,6 +17,15 @@ class Connection(QGraphicsItem):
         self.slot = None
         self.is_highlighted = False
 
+        # --- FIX ---
+        # Create the QPainterPath object only ONCE and reuse it.
+        self.path = QPainterPath()
+        # Create the stroker for the shape() only ONCE.
+        self.stroker = QPainterPathStroker()
+        self.stroker.setWidth(10)
+        self.stroker.setCapStyle(Qt.RoundCap)
+        self.stroker.setJoinStyle(Qt.RoundJoin)
+
         self.setZValue(1)
         self.setAcceptHoverEvents(True) # Enable hover events for this item
 
@@ -51,11 +60,9 @@ class Connection(QGraphicsItem):
 
     def shape(self):
         """Returns a precise shape for collision detection."""
-        stroker = QPainterPathStroker()
-        stroker.setWidth(10) # Create a 10-pixel wide clickable area
-        stroker.setCapStyle(Qt.RoundCap)
-        stroker.setJoinStyle(Qt.RoundJoin)
-        return stroker.createStroke(self.path)
+        # --- FIX ---
+        # Reuse the stroker object instead of creating a new one.
+        return self.stroker.createStroke(self.path)
 
     def boundingRect(self):
         return self.shape().boundingRect()
@@ -91,11 +98,16 @@ class Connection(QGraphicsItem):
             else:
                  end_pos = self.end_node.mapToScene(self.end_node.input_rect.center())
 
-            self.path = QPainterPath(start_pos)
+            # --- FIX ---
+            # Clear the existing path and rebuild it instead of creating a new object.
+            self.path.clear()
+            self.path.moveTo(start_pos)
+
             dx = abs(start_pos.x() - end_pos.x()) * 0.5
             start_tangent = QPointF(start_pos.x() + dx, start_pos.y())
             end_tangent = QPointF(end_pos.x() - dx, end_pos.y())
             self.path.cubicTo(start_tangent, end_tangent, end_pos)
+
         self.update() # Ensure bounding rect is updated with the path
 
     def mousePressEvent(self, event):
