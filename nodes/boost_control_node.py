@@ -199,3 +199,26 @@ class BoostControlNode(BaseNode):
                 event.accept()
                 return
         super().mousePressEvent(event)
+
+    # --- NEUE METHODEN HINZUGEFÜGT ---
+
+    def get_state(self):
+        """Sammelt die spezifischen Werte dieses Nodes zum Speichern."""
+        state = super().get_state()
+        state['boost_duration_s'] = self.boost_duration_s
+        state['cooldown_duration_s'] = self.cooldown_duration_s
+        state['boost_amount_us'] = self.boost_amount_us
+        return state
+
+    def set_state(self, data):
+        """Stellt den Zustand des Nodes aus den geladenen Daten wieder her."""
+        super().set_state(data)
+        # Lade die Werte aus den Daten, mit Standardwerten falls sie nicht existieren
+        self.boost_duration_s = data.get('boost_duration_s', 2.0)
+        self.cooldown_duration_s = data.get('cooldown_duration_s', 3.0)
+        self.boost_amount_us = data.get('boost_amount_us', 500)
+
+        # Aktualisiere die Textfelder in der UI, damit sie die geladenen Werte anzeigen
+        self.boost_duration_edit.setText(str(self.boost_duration_s))
+        self.cooldown_duration_edit.setText(str(self.cooldown_duration_s))
+        self.boost_amount_edit.setText(str(self.boost_amount_us))

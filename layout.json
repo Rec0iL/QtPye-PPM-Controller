@@ -3,10 +3,10 @@
         {
             "id": "329aab17-0b61-42f1-9d1c-1ebae269fd77",
             "type": "JoystickNode",
-            "title": "Xbox One S Controller",
+            "title": "Xbox One S Controller (Disconnected)",
             "x": 963.75,
             "y": 540.0,
-            "joystick_id": 1,
+            "joystick_id": -1,
             "guid": "050082795e040000200b000013050000",
             "name": "Xbox One S Controller",
             "num_axes": 6,
@@ -35,14 +35,17 @@
             "throttle_limit": 30,
             "brake_limit": 30,
             "brake_deadzone": 5,
-            "center_us": 1500
+            "center_us": 1505
         },
         {
             "id": "9e3df95a-9834-441e-812d-ae3cba03e128",
             "type": "BoostControlNode",
             "title": "Boost Control",
             "x": 1904.25,
-            "y": 709.5
+            "y": 709.5,
+            "boost_duration_s": 2.0,
+            "cooldown_duration_s": 3.0,
+            "boost_amount_us": 100
         },
         {
             "id": "2b803054-fd8a-4296-85bc-a1323c715a79",
