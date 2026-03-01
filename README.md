@@ -1,3 +1,22 @@
+# ⚠️ Project Status
+
+This project is no longer actively maintained.
+
+During extended testing, a persistent memory leak was identified in the application's core architecture. After extensive debugging and multiple refactoring attempts, it became clear that resolving the issue properly would require a fundamental redesign of the core system.
+
+Instead of patching around the problem, I decided to rewrite the entire application from scratch with a new architecture.
+
+The new version:
+
+- Eliminates the memory leak
+- Runs significantly more performant and stable
+- Uses a redesigned and cleaner core structure
+- Is built with long-term maintainability in mind
+
+This repository will remain available for reference and educational purposes, but it will not receive further updates.
+
+I will publish and link the new GitHub repository once it is made public.
+
 # QtPye-PPM-Controller 🎮
 
 A flexible, node-based graphical interface for creating custom remote control setups. This application reads input from standard USB joysticks, gamepads, and steering wheels and outputs a configurable PPM (Pulse-Position Modulation) signal via a serial-connected hardware adapter.
